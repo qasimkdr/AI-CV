@@ -8,7 +8,7 @@ import {
 const api =
   axios.create({
     baseURL:
-      "https://ai-cv-qf0m.onrender.com",
+      "https://ai-cv-qf0m.onrender.com/api",
     headers: {
       "Content-Type":
         "application/json",
