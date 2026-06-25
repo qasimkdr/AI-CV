@@ -11,7 +11,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "https://aicvfrontend.netlify.app/",
+    origin: "https://aicvfrontend.netlify.app",
   })
 );
 
