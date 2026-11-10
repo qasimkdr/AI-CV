@@ -23,7 +23,14 @@ export default function ResumePreview() {
 
   const handlePrint = useReactToPrint({
     contentRef: resumeRef,
-    documentTitle: resume?.personalInfo?.fullName || "Resume",
+    documentTitle: `${resume?.personalInfo?.fullName || "Resume"} - Resume`,
+    // A4 pages with print margins; templates drop their screen padding in print.
+    pageStyle: `
+      @page { size: A4; margin: 10mm 0; }
+      html, body { background: #fff !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .resume-page { max-width: none !important; }
+    `,
   });
 
   useEffect(() => {

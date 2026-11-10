@@ -1,256 +1,109 @@
-export default function ATSClassicTemplate({
-  data,
-}) {
-  const hasSkills =
-    data.skills?.length > 0;
+import { contactItems, dateRange, normalizeResume } from "./resumeData";
+import { Description, Page } from "./shared";
 
-  const hasExperience =
-    data.experience?.length > 0;
+// Deliberately plain: single column, standard headings, no icons or columns —
+// the format applicant tracking systems parse most reliably.
+function Section({ title, children }) {
+  return (
+    <section className="mt-5">
+      <h2 className="border-b border-slate-800 pb-1 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-900">{title}</h2>
+      <div className="mt-2.5">{children}</div>
+    </section>
+  );
+}
 
-  const hasEducation =
-    data.education?.length > 0;
-
-  const hasProjects =
-    data.projects?.length > 0;
-
-  const hasCertifications =
-    data.certifications?.length > 0;
+export default function ATSClassicTemplate({ data }) {
+  const r = normalizeResume(data);
+  const contacts = contactItems(r.personal);
 
   return (
-    <div className="mx-auto max-w-4xl bg-white p-8 shadow">
-      {/* Header */}
-      <div className="border-b pb-4 text-center">
-        <h1 className="text-3xl font-bold">
-          {data.personalInfo
-            ?.fullName || ""}
-        </h1>
+    <Page className="px-14 py-12 text-slate-800" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <header className="text-center">
+        <h1 className="text-[28px] font-bold tracking-wide text-slate-900">{r.personal.fullName || "Your Name"}</h1>
+        {r.personal.title && <p className="mt-0.5 text-[14px] text-slate-700">{r.personal.title}</p>}
+        {contacts.length > 0 && (
+          <p className="mt-2 text-[12px] text-slate-700">
+            {contacts.map((c, i) => (
+              <span key={c.key}>
+                {i > 0 && <span className="mx-2 text-slate-400">|</span>}
+                {c.href ? <a href={c.href}>{c.label}</a> : c.label}
+              </span>
+            ))}
+          </p>
+        )}
+      </header>
 
-        <div className="mt-2 space-y-1 text-sm text-slate-600">
-          {data.personalInfo
-            ?.email && (
-            <p>
-              {
-                data
-                  .personalInfo
-                  .email
-              }
-            </p>
-          )}
-
-          {data.personalInfo
-            ?.phone && (
-            <p>
-              {
-                data
-                  .personalInfo
-                  .phone
-              }
-            </p>
-          )}
-
-          {data.personalInfo
-            ?.address && (
-            <p>
-              {
-                data
-                  .personalInfo
-                  .address
-              }
-            </p>
-          )}
-
-          {data.personalInfo
-            ?.linkedin && (
-            <p>
-              {
-                data
-                  .personalInfo
-                  .linkedin
-              }
-            </p>
-          )}
-
-          {data.personalInfo
-            ?.github && (
-            <p>
-              {
-                data
-                  .personalInfo
-                  .github
-              }
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Skills */}
-      {hasSkills && (
-        <div className="mt-6">
-          <h2 className="border-b pb-2 font-bold uppercase">
-            Skills
-          </h2>
-
-          <ul className="mt-3 list-disc pl-5">
-            {data.skills.map(
-              (
-                skill,
-                index
-              ) => (
-                <li
-                  key={index}
-                >
-                  {skill}
-                </li>
-              )
-            )}
-          </ul>
-        </div>
+      {r.summary && (
+        <Section title="Professional Summary">
+          <p>{r.summary}</p>
+        </Section>
       )}
 
-      {/* Experience */}
-      {hasExperience && (
-        <div className="mt-6">
-          <h2 className="border-b pb-2 font-bold uppercase">
-            Experience
-          </h2>
+      {r.experience.length > 0 && (
+        <Section title="Experience">
+          <div className="space-y-4">
+            {r.experience.map((e, i) => (
+              <div key={i} className="break-inside-avoid">
+                <div className="flex items-baseline justify-between gap-4">
+                  <p className="font-bold text-slate-900">
+                    {e.position}
+                    {e.position && e.company && ", "}
+                    <span className="font-normal">{e.company}</span>
+                  </p>
+                  <span className="shrink-0 text-[12px]">{dateRange(e.startDate, e.endDate)}</span>
+                </div>
+                <Description text={e.description} className="mt-1" />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
-          {data.experience.map(
-            (
-              exp,
-              index
-            ) => (
-              <div
-                key={index}
-                className="mt-4"
-              >
-                <h3 className="font-bold">
-                  {exp.position}
-                </h3>
+      {r.projects.length > 0 && (
+        <Section title="Projects">
+          <div className="space-y-3">
+            {r.projects.map((p, i) => (
+              <div key={i} className="break-inside-avoid">
+                <p className="font-bold text-slate-900">{p.title}</p>
+                <Description text={p.description} className="mt-0.5" />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
+      {r.education.length > 0 && (
+        <Section title="Education">
+          <div className="space-y-2">
+            {r.education.map((e, i) => (
+              <div key={i} className="flex items-baseline justify-between gap-4 break-inside-avoid">
                 <p>
-                  {exp.company}
+                  <span className="font-bold text-slate-900">{e.degree}</span>
+                  {e.degree && e.institute && ", "}
+                  {e.institute}
                 </p>
-
-                {exp.description && (
-                  <p className="text-sm text-slate-600">
-                    {
-                      exp.description
-                    }
-                  </p>
-                )}
+                <span className="shrink-0 text-[12px]">{dateRange(e.startYear, e.endYear)}</span>
               </div>
-            )
-          )}
-        </div>
+            ))}
+          </div>
+        </Section>
       )}
 
-      {/* Education */}
-      {hasEducation && (
-        <div className="mt-6">
-          <h2 className="border-b pb-2 font-bold uppercase">
-            Education
-          </h2>
-
-          {data.education.map(
-            (
-              edu,
-              index
-            ) => (
-              <div
-                key={index}
-                className="mt-4"
-              >
-                {edu.degree && (
-                  <h3 className="font-bold">
-                    {edu.degree}
-                  </h3>
-                )}
-
-                {edu.institute && (
-                  <p>
-                    {
-                      edu.institute
-                    }
-                  </p>
-                )}
-
-                {(edu.startYear ||
-                  edu.endYear) && (
-                  <p className="text-sm text-slate-500">
-                    {
-                      edu.startYear
-                    }
-                    {edu.startYear &&
-                    edu.endYear
-                      ? " - "
-                      : ""}
-                    {edu.endYear}
-                  </p>
-                )}
-              </div>
-            )
-          )}
-        </div>
+      {r.skills.length > 0 && (
+        <Section title="Skills">
+          <p>{r.skills.join(", ")}</p>
+        </Section>
       )}
 
-      {/* Projects */}
-      {hasProjects && (
-        <div className="mt-6">
-          <h2 className="border-b pb-2 font-bold uppercase">
-            Projects
-          </h2>
-
-          {data.projects.map(
-            (
-              project,
-              index
-            ) => (
-              <div
-                key={index}
-                className="mt-4"
-              >
-                <h3 className="font-bold">
-                  {
-                    project.title
-                  }
-                </h3>
-
-                {project.description && (
-                  <p className="text-sm text-slate-600">
-                    {
-                      project.description
-                    }
-                  </p>
-                )}
-              </div>
-            )
-          )}
-        </div>
-      )}
-
-      {/* Certifications */}
-      {hasCertifications && (
-        <div className="mt-6">
-          <h2 className="border-b pb-2 font-bold uppercase">
-            Certifications
-          </h2>
-
-          <ul className="mt-3 list-disc pl-5">
-            {data.certifications.map(
-              (
-                cert,
-                index
-              ) => (
-                <li
-                  key={index}
-                >
-                  {cert}
-                </li>
-              )
-            )}
+      {r.certifications.length > 0 && (
+        <Section title="Certifications">
+          <ul className="list-disc space-y-0.5 pl-5">
+            {r.certifications.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
           </ul>
-        </div>
+        </Section>
       )}
-    </div>
+    </Page>
   );
 }

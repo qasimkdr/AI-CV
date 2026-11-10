@@ -8,7 +8,7 @@ export const TEMPLATES = [
   {
     id: "modern",
     name: "Modern",
-    description: "Clean layout with a confident indigo accent.",
+    description: "Two-column layout with a soft violet header and skill chips.",
     bestFor: "Tech, product & startups",
     accent: "from-violet to-sky",
     component: ModernTemplate,
@@ -16,7 +16,7 @@ export const TEMPLATES = [
   {
     id: "ats",
     name: "ATS Classic",
-    description: "Recruiter-proof, single column, zero clutter.",
+    description: "Single column, standard headings — the safest choice for ATS.",
     bestFor: "Corporate & large companies",
     accent: "from-sky to-mint",
     component: ATSClassicTemplate,
@@ -24,7 +24,7 @@ export const TEMPLATES = [
   {
     id: "creative",
     name: "Creative",
-    description: "Stylish sidebar layout that stands out.",
+    description: "Pastel sidebar, timeline experience and project cards.",
     bestFor: "Design, marketing & media",
     accent: "from-blush to-peach",
     component: CreativeTemplate,
@@ -32,7 +32,7 @@ export const TEMPLATES = [
   {
     id: "executive",
     name: "Executive",
-    description: "Refined, premium layout for senior roles.",
+    description: "Elegant serif typography with navy and gold accents.",
     bestFor: "Leadership & management",
     accent: "from-peach to-violet",
     component: ExecutiveTemplate,
@@ -40,7 +40,7 @@ export const TEMPLATES = [
   {
     id: "developer",
     name: "Developer",
-    description: "Code-inspired design for engineers.",
+    description: "Light, code-inspired layout with a tech-stack section.",
     bestFor: "Software engineers",
     accent: "from-mint to-violet",
     component: DeveloperTemplate,

@@ -32,6 +32,12 @@ export function scoreResume(resume = {}) {
       done: filled(p.linkedin) || filled(p.github),
     },
     {
+      id: "summary",
+      label: "Write a short professional summary",
+      weight: 8,
+      done: filled(resume.summary),
+    },
+    {
       id: "experience",
       label: "Add work experience",
       weight: 22,

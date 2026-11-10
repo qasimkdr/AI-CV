@@ -1,6 +1,7 @@
 export const emptyResume = (template = "modern") => ({
   template,
-  personalInfo: { fullName: "", email: "", phone: "", address: "", linkedin: "", github: "" },
+  personalInfo: { fullName: "", title: "", email: "", phone: "", address: "", linkedin: "", github: "" },
+  summary: "",
   education: [],
   experience: [],
   skills: [],
@@ -12,6 +13,7 @@ export const normalizeResume = (r = {}) => ({
   ...r,
   template: String(r.template || "modern").toLowerCase(),
   personalInfo: { ...emptyResume().personalInfo, ...(r.personalInfo || {}) },
+  summary: r.summary || "",
   education: r.education || [],
   experience: r.experience || [],
   skills: r.skills || [],

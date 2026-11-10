@@ -90,7 +90,7 @@ export default function ResumeEditor({ data, setData, onSave, saving, dirty, sav
   const current = STEPS[step].id;
   const form = {
     template: <TemplateSelector selectedTemplate={data.template} setResumeData={setData} />,
-    personal: <PersonalInfoForm data={data.personalInfo} setResumeData={setData} />,
+    personal: <PersonalInfoForm data={data.personalInfo} summary={data.summary} setResumeData={setData} />,
     experience: <ExperienceForm data={data.experience} setResumeData={setData} />,
     education: <EducationForm data={data.education} setResumeData={setData} />,
     skills: <SkillsForm data={data.skills} setResumeData={setData} />,
