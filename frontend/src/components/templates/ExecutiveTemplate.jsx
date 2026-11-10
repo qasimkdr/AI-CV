@@ -1,201 +1,89 @@
-export default function ExecutiveTemplate({
-  data,
-}) {
-  const hasSkills =
-    data.skills?.length > 0;
+import { SECTION_TITLES, contactItems, normalizeResume } from "./resumeData";
+import { Page, Photo, SectionBody } from "./shared";
 
-  const hasExperience =
-    data.experience?.length > 0;
+const SERIF = 'Georgia, "Times New Roman", serif';
+const GOLD = "#b08a3e";
+const NAVY = "#1f2a44";
 
-  const hasEducation =
-    data.education?.length > 0;
+const TITLES = { ...SECTION_TITLES, summary: "Executive Profile", skills: "Core Competencies", experience: "Professional Experience", projects: "Key Initiatives" };
+const HALF = new Set(["education", "certifications", "languages", "courses", "memberships", "interests", "references", "awards"]);
 
-  const hasProjects =
-    data.projects?.length > 0;
+function Heading({ children }) {
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.25em]" style={{ color: NAVY }}>{children}</h2>
+      <span className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
+    </div>
+  );
+}
 
-  const hasCertifications =
-    data.certifications?.length > 0;
+const theme = {
+  accent: GOLD,
+  inline: true,
+  inlineSep: " — ",
+  inlineSepClass: "font-normal text-slate-500",
+  orgInlineClass: "font-normal italic text-slate-600",
+  titleClass: "text-[15px] font-bold",
+  smallTitleClass: "font-bold",
+  dateClass: "text-[11px] font-semibold uppercase tracking-wider text-slate-500",
+  bulletClass: "!rounded-none rotate-45",
+  skills: "grid",
+  chipClass: "rounded px-2 py-0.5 ring-1 ring-amber-200 text-[12px]",
+  summaryClass: "text-[13.5px] leading-relaxed",
+  summaryStyle: { fontFamily: SERIF },
+};
+const half = { ...theme, compact: true, inline: false, titleClass: "font-bold text-slate-900", orgClass: "text-[12.5px]", dateClass: "text-[11px] text-slate-500" };
+
+export default function ExecutiveTemplate({ data }) {
+  const r = normalizeResume(data);
+  const contacts = contactItems(r.personal);
+  const headline = r.personal.title || r.experience[0]?.title;
+  const fullIds = r.order.filter((id) => !HALF.has(id));
+  const halfIds = r.order.filter((id) => HALF.has(id));
 
   return (
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-xl bg-white shadow-xl">
-
-      {/* Header */}
-      <div className="bg-slate-900 p-8 text-white">
-        <h1 className="text-4xl font-bold">
-          {data.personalInfo?.fullName || ""}
-        </h1>
-
-        <div className="mt-3 space-y-1 text-sm text-slate-300">
-          {data.personalInfo?.email && (
-            <p>{data.personalInfo.email}</p>
-          )}
-
-          {data.personalInfo?.phone && (
-            <p>{data.personalInfo.phone}</p>
-          )}
-
-          {data.personalInfo?.address && (
-            <p>{data.personalInfo.address}</p>
-          )}
-
-          {data.personalInfo?.linkedin && (
-            <p>{data.personalInfo.linkedin}</p>
-          )}
-
-          {data.personalInfo?.github && (
-            <p>{data.personalInfo.github}</p>
-          )}
+    <Page className="px-14 py-12 text-slate-700" style={{ "--navy": NAVY }}>
+      <header className="text-center">
+        <Photo src={r.personal.photo} className="mx-auto mb-4 h-24 w-24 rounded-full" style={{ boxShadow: `0 0 0 3px #fff, 0 0 0 4px ${GOLD}` }} />
+        <h1 className="text-[36px] tracking-wide" style={{ fontFamily: SERIF, color: NAVY }}>{r.personal.fullName || "Your Name"}</h1>
+        {headline && <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.3em]" style={{ color: GOLD }}>{headline}</p>}
+        <div className="mx-auto mt-4 flex items-center justify-center gap-3">
+          <span className="h-px w-16" style={{ background: GOLD }} />
+          <span className="h-1.5 w-1.5 rotate-45" style={{ background: GOLD }} />
+          <span className="h-px w-16" style={{ background: GOLD }} />
         </div>
+        {contacts.length > 0 && (
+          <p className="mt-3 text-[12px] text-slate-600">
+            {contacts.map((c, i) => (
+              <span key={c.key}>
+                {i > 0 && <span className="mx-2.5" style={{ color: GOLD }}>•</span>}
+                {c.href ? <a href={c.href}>{c.label}</a> : c.label}
+              </span>
+            ))}
+          </p>
+        )}
+        {r.personal.details.length > 0 && <p className="mt-1 text-[11.5px] text-slate-500">{r.personal.details.map((d) => `${d.label}: ${d.value}`).join("   •   ")}</p>}
+      </header>
+
+      <div className="[&_p.font-bold]:text-[var(--navy)] [&_p.font-bold]:[font-family:Georgia,serif]">
+        {fullIds.map((id) => (
+          <section key={id} className="mt-7">
+            <Heading>{TITLES[id]}</Heading>
+            <SectionBody id={id} r={r} theme={theme} />
+          </section>
+        ))}
+
+        {halfIds.length > 0 && (
+          <div className="mt-7 grid grid-cols-2 gap-x-10 gap-y-7">
+            {halfIds.map((id) => (
+              <section key={id}>
+                <Heading>{TITLES[id]}</Heading>
+                <SectionBody id={id} r={r} theme={half} />
+              </section>
+            ))}
+          </div>
+        )}
       </div>
-
-      <div className="grid gap-8 p-8 md:grid-cols-3">
-
-        {/* Left */}
-        <div className="space-y-8">
-
-          {hasSkills && (
-            <section>
-              <h2 className="mb-4 border-b pb-2 text-xl font-bold">
-                Skills
-              </h2>
-
-              <ul className="space-y-2">
-                {data.skills.map(
-                  (skill, index) => (
-                    <li key={index}>
-                      • {skill}
-                    </li>
-                  )
-                )}
-              </ul>
-            </section>
-          )}
-
-          {hasCertifications && (
-            <section>
-              <h2 className="mb-4 border-b pb-2 text-xl font-bold">
-                Certifications
-              </h2>
-
-              <ul className="space-y-2">
-                {data.certifications.map(
-                  (cert, index) => (
-                    <li key={index}>
-                      • {cert}
-                    </li>
-                  )
-                )}
-              </ul>
-            </section>
-          )}
-        </div>
-
-        {/* Right */}
-        <div className="space-y-8 md:col-span-2">
-
-          {hasExperience && (
-            <section>
-              <h2 className="mb-4 border-b pb-2 text-2xl font-bold">
-                Experience
-              </h2>
-
-              {data.experience.map(
-                (exp, index) => (
-                  <div
-                    key={index}
-                    className="mb-6"
-                  >
-                    <h3 className="text-lg font-bold">
-                      {exp.position}
-                    </h3>
-
-                    <p className="font-medium text-slate-600">
-                      {exp.company}
-                    </p>
-
-                    {exp.description && (
-                      <p className="mt-2 text-slate-700">
-                        {exp.description}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
-            </section>
-          )}
-
-          {hasEducation && (
-            <section>
-              <h2 className="mb-4 border-b pb-2 text-2xl font-bold">
-                Education
-              </h2>
-
-              {data.education.map(
-                (edu, index) => (
-                  <div
-                    key={index}
-                    className="mb-5"
-                  >
-                    {edu.degree && (
-                      <h3 className="font-bold">
-                        {edu.degree}
-                      </h3>
-                    )}
-
-                    {edu.institute && (
-                      <p>{edu.institute}</p>
-                    )}
-
-                    {(edu.startYear ||
-                      edu.endYear) && (
-                      <p className="text-sm text-slate-500">
-                        {edu.startYear}
-                        {edu.startYear &&
-                        edu.endYear
-                          ? " - "
-                          : ""}
-                        {edu.endYear}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
-            </section>
-          )}
-
-          {hasProjects && (
-            <section>
-              <h2 className="mb-4 border-b pb-2 text-2xl font-bold">
-                Projects
-              </h2>
-
-              {data.projects.map(
-                (
-                  project,
-                  index
-                ) => (
-                  <div
-                    key={index}
-                    className="mb-5"
-                  >
-                    <h3 className="font-bold">
-                      {project.title}
-                    </h3>
-
-                    {project.description && (
-                      <p className="mt-2 text-slate-700">
-                        {project.description}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
-            </section>
-          )}
-
-        </div>
-
-      </div>
-    </div>
+    </Page>
   );
 }

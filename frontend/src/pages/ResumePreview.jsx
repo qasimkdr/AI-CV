@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { normalizeResume } from "../lib/resumeModel";
+import { getField } from "../lib/fields";
+import { applyChanges } from "../lib/aiDiff";
 import { useReactToPrint } from "react-to-print";
-import { ArrowLeft, FileDown, FileText, Minus, Pencil, Plus, Sparkles, Wand2 } from "lucide-react";
+import { ArrowLeft, FileDown, FileText, Minus, Pencil, Plus, Wand2 } from "lucide-react";
 
 import DashboardLayout from "../layouts/DashboardLayout";
 import ScoreRing from "../components/motion/ScoreRing";
@@ -13,17 +16,33 @@ import { TEMPLATES, getTemplate } from "../lib/templates";
 import { scoreResume } from "../lib/resumeScore";
 import { toast } from "../lib/toast";
 
+const loadOverlay = () => import("../components/ai/AIEnhanceOverlay");
+const loadReview = () => import("../components/ai/AIReview");
+const AIEnhanceOverlay = lazy(loadOverlay);
+const AIReview = lazy(loadReview);
+
 export default function ResumePreview() {
   const { id } = useParams();
   const [resume, setResume] = useState(null);
-  const [enhancing, setEnhancing] = useState(false);
+  const [ai, setAi] = useState(null); // { status: "working" | "done" }
+  const [review, setReview] = useState(null); // { original, enhanced }
+  const [applying, setApplying] = useState(false);
+  const abortRef = useRef(null);
+  const enhancing = Boolean(ai);
   const [exporting, setExporting] = useState(false);
   const [zoom, setZoom] = useState(1);
   const resumeRef = useRef(null);
 
   const handlePrint = useReactToPrint({
     contentRef: resumeRef,
-    documentTitle: resume?.personalInfo?.fullName || "Resume",
+    documentTitle: `${resume?.personalInfo?.fullName || "Resume"} - Resume`,
+    // A4 pages with print margins; templates drop their screen padding in print.
+    pageStyle: `
+      @page { size: A4; margin: 10mm 0; }
+      html, body { background: #fff !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .resume-page { max-width: none !important; }
+    `,
   });
 
   useEffect(() => {
@@ -49,33 +68,59 @@ export default function ResumePreview() {
   };
 
   const handleEnhance = async () => {
-    setEnhancing(true);
-    try {
-      const result = await enhanceResume(resume);
+    const original = normalizeResume(resume);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    loadReview(); // warm up so the review opens instantly
+    setAi({ status: "working" });
 
-      let enhancedData;
+    try {
+      // Photos aren't needed by the AI — keep the request small.
+      const payload = { ...original, fieldLabel: original.field ? getField(original.field).label : "", personalInfo: { ...original.personalInfo, photo: "" } };
+      const result = await enhanceResume(payload, { signal: controller.signal });
+
+      let enhanced;
       try {
-        const cleaned = String(result.enhanced || "")
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .trim();
-        enhancedData = JSON.parse(cleaned);
+        enhanced = normalizeResume(JSON.parse(String(result.enhanced || "").replace(/```json|```/g, "").trim()));
       } catch (parseError) {
         console.error(parseError);
+        setAi(null);
         toast.error("AI returned an invalid format — please try again");
         return;
       }
 
-      // keep identity + chosen design if the AI omits them
-      const merged = { ...resume, ...enhancedData, template: enhancedData.template || resume.template };
-      await updateResume(id, merged);
-      setResume(merged);
-      toast.success("Resume enhanced with AI ✨");
+      setAi({ status: "done" });
+      setTimeout(() => {
+        setAi(null);
+        setReview({ original, enhanced });
+      }, 1600);
     } catch (error) {
+      setAi(null);
+      if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
+        toast.info("Enhancement cancelled");
+        return;
+      }
       console.error(error);
       toast.error(error?.response?.data?.message || "AI enhancement failed");
+    }
+  };
+
+  const cancelEnhance = () => abortRef.current?.abort();
+
+  const applyReview = async (accepted) => {
+    if (!review) return;
+    setApplying(true);
+    const merged = applyChanges(review.original, review.enhanced, accepted);
+    try {
+      await updateResume(id, merged);
+      setResume(merged);
+      setReview(null);
+      toast.success(`Applied ${accepted.length} AI improvement${accepted.length === 1 ? "" : "s"} ✨`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Couldn't save the changes");
     } finally {
-      setEnhancing(false);
+      setApplying(false);
     }
   };
 
@@ -126,6 +171,7 @@ export default function ResumePreview() {
           <div className="glass-strong rounded-3xl p-5">
             <button
               type="button"
+              onPointerEnter={loadOverlay}
               onClick={handleEnhance}
               disabled={enhancing}
               className="btn btn-primary btn-lg w-full"
@@ -213,32 +259,21 @@ export default function ResumePreview() {
                 </div>
               </div>
 
-              <AnimatePresence>
-                {enhancing && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 overflow-hidden rounded-2xl bg-white/50 backdrop-blur-[2px]"
-                  >
-                    <motion.div
-                      animate={{ y: ["-10%", "110%"] }}
-                      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-violet/25 to-transparent"
-                    />
-                    <div className="sticky top-1/3 grid place-items-center pt-40">
-                      <span className="glass-strong flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-violet">
-                        <Sparkles size={16} className="animate-spin [animation-duration:3s]" />
-                        AI is polishing your resume…
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
             </motion.div>
           </div>
         </section>
       </div>
+
+      {/* Separate boundaries so loading one never suspends the other mid-animation */}
+      <Suspense fallback={null}>
+        <AnimatePresence>{ai && <AIEnhanceOverlay key="ai" status={ai.status} resume={resume} onCancel={cancelEnhance} />}</AnimatePresence>
+      </Suspense>
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {review && <AIReview key="review" original={review.original} enhanced={review.enhanced} applying={applying} onApply={applyReview} onClose={() => setReview(null)} />}
+        </AnimatePresence>
+      </Suspense>
     </DashboardLayout>
   );
 }

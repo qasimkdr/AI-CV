@@ -26,7 +26,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "2mb" })); // room for a compressed profile photo
 
 app.get("/", (req, res) => res.json({ name: "AI CV API", status: "ok" }));
 

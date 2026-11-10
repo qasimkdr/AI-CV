@@ -1,0 +1,33 @@
+import {
+  AwardsSection,
+  CertificationsSection,
+  CoursesSection,
+  EducationSection,
+  ExperienceSection,
+  InterestsSection,
+  LanguagesSection,
+  MembershipsSection,
+  ProjectsSection,
+  PublicationsSection,
+  ReferencesSection,
+  SkillsSection,
+  SummarySection,
+  VolunteeringSection,
+} from "./index";
+
+export const SECTION_FORMS = {
+  summary: SummarySection,
+  experience: ExperienceSection,
+  education: EducationSection,
+  skills: SkillsSection,
+  projects: ProjectsSection,
+  certifications: CertificationsSection,
+  languages: LanguagesSection,
+  volunteering: VolunteeringSection,
+  awards: AwardsSection,
+  courses: CoursesSection,
+  publications: PublicationsSection,
+  memberships: MembershipsSection,
+  interests: InterestsSection,
+  references: ReferencesSection,
+};
