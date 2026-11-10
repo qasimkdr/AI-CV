@@ -7,6 +7,7 @@ import ResumeEditor from "../components/editor/ResumeEditor";
 import { getResume, updateResume } from "../services/resumeApi";
 import { normalizeResume } from "../lib/resumeModel";
 import { toast } from "../lib/toast";
+import { friendlyError } from "../lib/apiError";
 
 export default function EditResume() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function EditResume() {
   const [resumeData, setResumeData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveState, setSaveState] = useState("saved");
+  const [saveError, setSaveError] = useState(null);
   const dirty = useRef(false);
   const latest = useRef(null);
 
@@ -37,11 +39,13 @@ export default function EditResume() {
     try {
       await updateResume(id, latest.current);
       setSaveState(dirty.current ? "unsaved" : "saved");
+      setSaveError(null);
       return true;
     } catch (error) {
       console.error(error);
       dirty.current = true;
       setSaveState("error");
+      setSaveError(friendlyError(error, "Failed to save changes"));
       return false;
     }
   }, [id]);
@@ -76,7 +80,7 @@ export default function EditResume() {
       setSaving(true);
       const ok = await persist();
       setSaving(false);
-      if (!ok) return toast.error("Failed to save changes");
+      if (!ok) return toast.error("Couldn't save — see the details above the form.");
       if (opts.finish) navigate(`/resume-preview/${id}`);
       else toast.success("Changes saved");
     },
@@ -97,7 +101,7 @@ export default function EditResume() {
       }
     >
       {resumeData ? (
-        <ResumeEditor data={resumeData} setData={update} onSave={handleSave} saving={saving} saveState={saveState} saveLabel="Save now" />
+        <ResumeEditor data={resumeData} setData={update} onSave={handleSave} saving={saving} saveState={saveState} saveError={saveError} onDismissError={() => setSaveError(null)} saveLabel="Save now" />
       ) : (
         <div className="grid gap-6 lg:grid-cols-[230px_1fr]">
           <div className="glass relative hidden h-[520px] overflow-hidden rounded-[2rem] lg:block">

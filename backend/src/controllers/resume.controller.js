@@ -1,30 +1,11 @@
 import Resume from "../models/Resume.js";
 import { env } from "../config/env.js";
 
-// Only these fields can be written by clients (never userId/_id/timestamps).
-const FIELDS = [
-  "template",
-  "field",
-  "sections",
-  "personalInfo",
-  "summary",
-  "education",
-  "experience",
-  "skills",
-  "projects",
-  "certifications",
-  "languages",
-  "volunteering",
-  "awards",
-  "courses",
-  "publications",
-  "memberships",
-  "interests",
-  "references",
-];
+import { sanitizeResume } from "../utils/sanitizeResume.js";
 
-const pick = (body = {}) =>
-  Object.fromEntries(FIELDS.filter((k) => body[k] !== undefined).map((k) => [k, body[k]]));
+// Only known resume fields are kept (never userId/_id/timestamps), coerced to
+// the right types; every field is optional and empty entries are dropped.
+const pick = (body = {}) => sanitizeResume(body);
 
 export const createResume = async (req, res) => {
   const count = await Resume.countDocuments({ userId: req.user.id });

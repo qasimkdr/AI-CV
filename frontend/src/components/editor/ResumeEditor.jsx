@@ -27,6 +27,8 @@ import {
   Wrench,
   X,
   BadgeCheck,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 
 import { EditorContext } from "./EditorContext";
@@ -40,6 +42,7 @@ import { getTemplate } from "../../lib/templates";
 import { scoreResume } from "../../lib/resumeScore";
 import { getField } from "../../lib/fields";
 import { sectionMeta } from "../../lib/sections";
+import { checkResume, stepForPath } from "../../lib/resumeChecks";
 
 const ICONS = {
   setup: Settings2,
@@ -107,7 +110,7 @@ function SaveStatus({ state }) {
     saved: { icon: Cloud, text: "All changes saved", cls: "text-emerald-600" },
     draft: { icon: Cloud, text: "Draft saved on this device", cls: "text-emerald-600" },
     unsaved: { icon: CloudOff, text: "Unsaved changes", cls: "text-amber-600" },
-    error: { icon: CloudOff, text: "Couldn't save — retrying", cls: "text-rose-500" },
+    error: { icon: CloudOff, text: "Couldn't save — see details above", cls: "text-rose-500" },
   }[state];
   if (!map) return null;
   const Icon = map.icon;
@@ -127,7 +130,7 @@ function LivePreview({ data }) {
   );
 }
 
-export default function ResumeEditor({ data, setData, onSave, saving, saveState, saveLabel = "Save resume", finishLabel = "Finish & preview" }) {
+export default function ResumeEditor({ data, setData, onSave, saving, saveState, saveError, onDismissError, saveLabel = "Save resume", finishLabel = "Finish & preview" }) {
   const field = getField(data.field);
   const steps = useMemo(
     () => [
@@ -146,6 +149,10 @@ export default function ResumeEditor({ data, setData, onSave, saving, saveState,
   const [dir, setDir] = useState(1);
   const [previewOpen, setPreviewOpen] = useState(false);
   const score = useMemo(() => scoreResume(data), [data]);
+
+  const issues = useMemo(() => checkResume(data), [data]);
+  const issueSteps = new Set(issues.filter((i) => i.level === "warn").map((i) => i.step));
+  const errorSteps = new Set((saveError?.fields || []).map((f) => stepForPath(f.path)));
 
   const index = Math.max(0, steps.findIndex((s) => s.id === stepId));
   const current = steps[index];
@@ -223,6 +230,9 @@ export default function ResumeEditor({ data, setData, onSave, saving, saveState,
                         <AnimatePresence>{burst?.id === s.id && <Burst key={burst.n} />}</AnimatePresence>
                       </span>
                       <span className="truncate">{s.label}</span>
+                      {(errorSteps.has(s.id) || issueSteps.has(s.id)) && (
+                        <span className={`ml-auto h-2 w-2 shrink-0 rounded-full ${errorSteps.has(s.id) ? "bg-rose-500" : "bg-amber-400"}`} title={errorSteps.has(s.id) ? "Couldn't save" : "Something to check"} />
+                      )}
                     </button>
                   </li>
                 );
@@ -242,12 +252,51 @@ export default function ResumeEditor({ data, setData, onSave, saving, saveState,
                     <button type="button" onClick={() => go(i)} className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition ${i === index ? "bg-brand text-white" : doneMap[s.id] ? "text-emerald-600" : "text-ink-soft"}`}>
                       {doneMap[s.id] && i !== index ? <Check size={13} strokeWidth={3} /> : <StepIcon size={13} />}
                       {s.label}
+                      {(errorSteps.has(s.id) || issueSteps.has(s.id)) && <span className={`h-1.5 w-1.5 rounded-full ${errorSteps.has(s.id) ? "bg-rose-500" : "bg-amber-400"}`} />}
                     </button>
                   </li>
                 );
               })}
             </ol>
           </div>
+
+          <AnimatePresence>
+            {saveError && (
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} role="alert" className="flex items-start gap-3 rounded-3xl border border-rose-200 bg-rose-50/90 p-4 text-sm text-rose-700">
+                <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">Your resume couldn't be saved</p>
+                  {saveError.fields?.length ? (
+                    <ul className="mt-1 space-y-1">
+                      {saveError.fields.map((f) => {
+                        const target = steps.findIndex((st) => st.id === stepForPath(f.path));
+                        return (
+                          <li key={f.path} className="flex flex-wrap items-center gap-2">
+                            <span>
+                              {f.label} {f.message}.
+                            </span>
+                            {target >= 0 && (
+                              <button type="button" onClick={() => go(target)} className="font-semibold underline underline-offset-2">
+                                Fix it
+                              </button>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="mt-0.5 break-words">{saveError.message}</p>
+                  )}
+                  <p className="mt-1 text-xs text-rose-600/80">Everything else you entered is still here. You can leave fields empty — only the items above need a fix.</p>
+                </div>
+                {onDismissError && (
+                  <button type="button" onClick={onDismissError} className="grid h-8 w-8 shrink-0 place-items-center rounded-full hover:bg-rose-100" aria-label="Dismiss">
+                    <X size={15} />
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <AnimatePresence mode="wait" custom={dir}>
             <motion.section
@@ -273,6 +322,20 @@ export default function ResumeEditor({ data, setData, onSave, saving, saveState,
                   {head.d && current.id !== "setup" && current.id !== "personal" ? null : <p className="mt-1 text-sm text-ink-soft">{head.d}</p>}
                 </div>
               </div>
+
+              {issues.some((i) => i.step === current.id) && (
+                <div className="relative mb-6 space-y-1.5 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm">
+                  <p className="font-semibold text-amber-800">Worth a quick look (optional — you can still save):</p>
+                  {issues
+                    .filter((i) => i.step === current.id)
+                    .map((i, k) => (
+                      <p key={k} className={`flex items-start gap-2 ${i.level === "warn" ? "text-amber-800" : "text-amber-700/80"}`}>
+                        {i.level === "warn" ? <AlertTriangle size={14} className="mt-0.5 shrink-0" /> : <Info size={14} className="mt-0.5 shrink-0" />}
+                        {i.message}
+                      </p>
+                    ))}
+                </div>
+              )}
 
               <div className="relative">
                 {current.id === "setup" ? (

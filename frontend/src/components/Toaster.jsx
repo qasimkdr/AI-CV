@@ -42,7 +42,7 @@ export function Toaster() {
             className="glass-strong pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-ink"
           >
             {ICONS[t.type]}
-            {t.message}
+            <span className="line-clamp-3">{t.message}</span>
           </motion.div>
         ))}
       </AnimatePresence>
