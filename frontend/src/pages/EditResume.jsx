@@ -37,7 +37,7 @@ export default function EditResume() {
       toast.success("Changes saved");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save changes");
+      toast.error(error?.response?.data?.message || "Failed to save changes");
     } finally {
       setSaving(false);
     }

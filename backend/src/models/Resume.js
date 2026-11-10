@@ -6,12 +6,10 @@ const resumeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
-    template: {
-      type: String,
-      required: true,
-    },
+    template: { type: String, default: "modern", trim: true },
 
     personalInfo: {
       fullName: String,
@@ -37,6 +35,8 @@ const resumeSchema = new mongoose.Schema(
       {
         company: String,
         position: String,
+        startDate: String,
+        endDate: String,
         description: String,
       },
     ],
@@ -52,12 +52,7 @@ const resumeSchema = new mongoose.Schema(
 
     certifications: [String],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export default mongoose.model(
-  "Resume",
-  resumeSchema
-);
+export default mongoose.model("Resume", resumeSchema);

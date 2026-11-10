@@ -1,142 +1,47 @@
 import Resume from "../models/Resume.js";
+import { env } from "../config/env.js";
 
-export const createResume = async (
-  req,
-  res
-) => {
-  try {
-    const existingResumes =
-      await Resume.find({
-        userId: req.user.id,
-      }).sort({
-        createdAt: 1,
-      });
+// Only these fields can be written by clients (never userId/_id/timestamps).
+const FIELDS = ["template", "personalInfo", "summary", "education", "experience", "skills", "projects", "certifications"];
 
-    if (
-      existingResumes.length >= 3
-    ) {
-      await Resume.findByIdAndDelete(
-        existingResumes[0]._id
-      );
-    }
+const pick = (body = {}) =>
+  Object.fromEntries(FIELDS.filter((k) => body[k] !== undefined).map((k) => [k, body[k]]));
 
-    const resume =
-      await Resume.create({
-        ...req.body,
-        userId: req.user.id,
-      });
-
-    res.status(201).json(resume);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
+export const createResume = async (req, res) => {
+  const count = await Resume.countDocuments({ userId: req.user.id });
+  if (count >= env.maxResumesPerUser) {
+    return res.status(409).json({
+      message: `You can keep up to ${env.maxResumesPerUser} resumes. Delete one to create another.`,
     });
   }
+
+  const resume = await Resume.create({ ...pick(req.body), userId: req.user.id });
+  res.status(201).json(resume);
 };
 
-export const getMyResumes =
-  async (req, res) => {
-    try {
-      const resumes =
-        await Resume.find({
-          userId: req.user.id,
-        }).sort({
-          createdAt: -1,
-        });
+export const getMyResumes = async (req, res) => {
+  const resumes = await Resume.find({ userId: req.user.id }).sort({ updatedAt: -1 });
+  res.json(resumes);
+};
 
-      res.json(resumes);
-    } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
-    }
-  };
+export const getResume = async (req, res) => {
+  const resume = await Resume.findOne({ _id: req.params.id, userId: req.user.id });
+  if (!resume) return res.status(404).json({ message: "Resume not found" });
+  res.json(resume);
+};
 
-export const getResume =
-  async (req, res) => {
-    try {
-      const resume =
-        await Resume.findOne({
-          _id: req.params.id,
-          userId: req.user.id,
-        });
+export const updateResume = async (req, res) => {
+  const resume = await Resume.findOneAndUpdate(
+    { _id: req.params.id, userId: req.user.id },
+    { $set: pick(req.body) },
+    { new: true, runValidators: true }
+  );
+  if (!resume) return res.status(404).json({ message: "Resume not found" });
+  res.json(resume);
+};
 
-      if (!resume) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Resume not found",
-          });
-      }
-
-      res.json(resume);
-    } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
-    }
-  };
-
-export const updateResume =
-  async (req, res) => {
-    try {
-      const resume =
-        await Resume.findOneAndUpdate(
-          {
-            _id: req.params.id,
-            userId: req.user.id,
-          },
-          req.body,
-          {
-            new: true,
-          }
-        );
-
-      if (!resume) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Resume not found",
-          });
-      }
-
-      res.json(resume);
-    } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
-    }
-  };
-
-export const deleteResume =
-  async (req, res) => {
-    try {
-      const resume =
-        await Resume.findOneAndDelete(
-          {
-            _id: req.params.id,
-            userId: req.user.id,
-          }
-        );
-
-      if (!resume) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Resume not found",
-          });
-      }
-
-      res.json({
-        message:
-          "Resume deleted successfully",
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: error.message,
-      });
-    }
-  };
+export const deleteResume = async (req, res) => {
+  const resume = await Resume.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+  if (!resume) return res.status(404).json({ message: "Resume not found" });
+  res.json({ message: "Resume deleted successfully" });
+};
