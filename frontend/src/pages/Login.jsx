@@ -3,10 +3,7 @@ import LoginForm from "../components/auth/LoginForm";
 
 export default function Login() {
   return (
-    <AuthLayout
-      title="Welcome Back"
-      subtitle="Login to continue building resumes"
-    >
+    <AuthLayout title="Welcome back" subtitle="Log in to keep building resumes that get you hired.">
       <LoginForm />
     </AuthLayout>
   );

@@ -1,99 +1,43 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { SectionCard, TextField } from "../editor/FormBits";
 
-export default function PersonalInfoForm({
-  data,
-  setResumeData,
-}) {
+const fields = [
+  { name: "fullName", label: "Full name", placeholder: "Jane Doe", autoComplete: "name" },
+  { name: "email", label: "Email", placeholder: "jane@example.com", type: "email", autoComplete: "email" },
+  { name: "phone", label: "Phone", placeholder: "+1 555 123 4567", type: "tel", autoComplete: "tel" },
+  { name: "address", label: "Location", placeholder: "City, Country", autoComplete: "address-level2" },
+  { name: "linkedin", label: "LinkedIn", placeholder: "linkedin.com/in/janedoe" },
+  { name: "github", label: "GitHub / Portfolio", placeholder: "github.com/janedoe" },
+];
+
+export default function PersonalInfoForm({ data = {}, setResumeData }) {
   const handleChange = (e) => {
     setResumeData((prev) => ({
       ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        [e.target.name]: e.target.value,
-      },
+      personalInfo: { ...prev.personalInfo, [e.target.name]: e.target.value },
     }));
   };
 
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-200/60 backdrop-blur-xl md:p-6">
-      <div className="mb-6">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-500">
-          Identity
-        </p>
-        <h2 className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
-          Personal Information
-        </h2>
+    <SectionCard
+      eyebrow="Identity"
+      title="Personal information"
+      description="How recruiters will reach you. Use a professional email address."
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        {fields.map((f) => (
+          <TextField
+            key={f.name}
+            id={`pi-${f.name}`}
+            label={f.label}
+            name={f.name}
+            type={f.type || "text"}
+            autoComplete={f.autoComplete}
+            placeholder={f.placeholder}
+            value={data[f.name] || ""}
+            onChange={handleChange}
+          />
+        ))}
       </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <Label className="mb-2 text-slate-700">Full Name</Label>
-          <Input
-            name="fullName"
-            value={data.fullName}
-            onChange={handleChange}
-            placeholder="Muhammad Qasim"
-            className="h-11 border-slate-200 bg-white"
-          />
-        </div>
-
-        <div>
-          <Label className="mb-2 text-slate-700">Email</Label>
-          <Input
-            name="email"
-            type="email"
-            value={data.email}
-            onChange={handleChange}
-            placeholder="qasim@gmail.com"
-            className="h-11 border-slate-200 bg-white"
-          />
-        </div>
-
-        <div>
-          <Label className="mb-2 text-slate-700">Phone</Label>
-          <Input
-            name="phone"
-            value={data.phone}
-            onChange={handleChange}
-            placeholder="+92 300 1234567"
-            className="h-11 border-slate-200 bg-white"
-          />
-        </div>
-
-        <div>
-          <Label className="mb-2 text-slate-700">Address</Label>
-          <Input
-            name="address"
-            value={data.address}
-            onChange={handleChange}
-            placeholder="Karachi, Pakistan"
-            className="h-11 border-slate-200 bg-white"
-          />
-        </div>
-
-        <div>
-          <Label className="mb-2 text-slate-700">LinkedIn</Label>
-          <Input
-            name="linkedin"
-            value={data.linkedin}
-            onChange={handleChange}
-            placeholder="linkedin.com/in/qasim"
-            className="h-11 border-slate-200 bg-white"
-          />
-        </div>
-
-        <div>
-          <Label className="mb-2 text-slate-700">Github</Label>
-          <Input
-            name="github"
-            value={data.github}
-            onChange={handleChange}
-            placeholder="github.com/qasim"
-            className="h-11 border-slate-200 bg-white"
-          />
-        </div>
-      </div>
-    </div>
+    </SectionCard>
   );
 }

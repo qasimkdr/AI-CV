@@ -1,157 +1,91 @@
 import { motion } from "framer-motion";
-import {
-  FileText,
-  Sparkles,
-} from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 
-export default function AuthLayout({
-  title,
-  subtitle,
-  children,
-}) {
+import Logo from "../brand/Logo";
+import Seo from "../seo/Seo";
+import Scene3D from "../three/Scene3D";
+
+const perks = [
+  "AI rewrites your experience in one click",
+  "5 ATS-friendly, designer templates",
+  "Export to PDF and Word instantly",
+];
+
+export default function AuthLayout({ title, subtitle, children, side }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top_left,#dcf7ff_0,#f8fafc_34%,#ecfdf5_100%)] px-4 py-10">
-      <div className="pointer-events-none absolute inset-0">
-        <motion.div
-          animate={{
-            y: [0, -18, 0],
-            x: [0, 10, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute left-[8%] top-[14%] h-64 w-64 rounded-full bg-sky-300/30 blur-3xl"
-        />
-        <motion.div
-          animate={{
-            y: [0, 16, 0],
-            x: [0, -12, 0],
-          }}
-          transition={{
-            duration: 9,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute bottom-[10%] right-[8%] h-72 w-72 rounded-full bg-emerald-300/25 blur-3xl"
-        />
-      </div>
+    <>
+      <Seo />
+      <div className="aurora" aria-hidden="true" />
 
-      <div className="relative z-10 grid w-full max-w-6xl items-center gap-8 lg:grid-cols-[1fr_460px]">
-        <motion.section
-          initial={{
-            opacity: 0,
-            y: 24,
-            rotateX: 8,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            rotateX: 0,
-          }}
-          transition={{
-            duration: 0.55,
-            ease: "easeOut",
-          }}
-          className="hidden min-h-[560px] rounded-2xl border border-white/70 bg-slate-950 p-10 text-white shadow-2xl shadow-sky-900/20 lg:block"
-          style={{
-            transformStyle: "preserve-3d",
-          }}
-        >
-          <div className="relative h-full overflow-hidden rounded-xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(56,189,248,0.42),transparent_30%),radial-gradient(circle_at_82%_72%,rgba(52,211,153,0.30),transparent_34%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.16),transparent_36%,rgba(255,255,255,0.08))]" />
+      <div className="grid min-h-[100dvh] lg:grid-cols-[1.1fr_1fr]">
+        {/* Visual side */}
+        <aside className="relative hidden overflow-hidden p-6 lg:block">
+          <div className="glass relative flex h-full flex-col justify-between overflow-hidden rounded-[2.5rem] p-10">
+            <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-br from-violet/10 via-sky/10 to-blush/10" />
+            <Logo className="relative" />
 
-            <div className="relative z-10 flex h-full flex-col justify-between p-8">
-              <div>
-                <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm text-sky-100 backdrop-blur">
-                  <Sparkles size={16} />
-                  3D resume workspace
-                </div>
+            <Scene3D
+              scene="shapes"
+              className="absolute inset-x-0 bottom-[36%] top-16"
+              fallback={null}
+            />
 
-                <h2 className="max-w-md text-5xl font-black leading-tight tracking-tight">
-                  Build resumes with a smarter visual flow.
-                </h2>
-
-                <p className="mt-5 max-w-md text-sm leading-6 text-slate-300">
-                  Sign in and continue shaping polished CVs with AI assistance, clean templates, and a dashboard moving toward a full 3D motion experience.
-                </p>
-              </div>
-
-              <motion.div
-                animate={{
-                  y: [0, -12, 0],
-                  rotateY: [0, -4, 0],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="w-80 rounded-2xl border border-white/15 bg-white/10 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl"
-                style={{
-                  transform:
-                    "translateZ(42px) rotateX(5deg)",
-                }}
+            <div className="relative">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.7 }}
+                className="max-w-md text-4xl font-extrabold leading-tight text-ink xl:text-5xl"
               >
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-sky-400 to-emerald-300 text-slate-950 shadow-lg shadow-sky-500/30">
-                    <FileText size={24} />
-                  </div>
-                  <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs text-emerald-100">
-                    AI Ready
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="h-3 w-48 rounded-full bg-white/60" />
-                  <div className="h-2 w-full rounded-full bg-white/25" />
-                  <div className="h-2 w-5/6 rounded-full bg-white/20" />
-                  <div className="mt-5 grid grid-cols-3 gap-2">
-                    <div className="h-16 rounded-xl bg-sky-300/25" />
-                    <div className="h-16 rounded-xl bg-white/10" />
-                    <div className="h-16 rounded-xl bg-emerald-300/25" />
-                  </div>
-                </div>
-              </motion.div>
+                {side?.title || (
+                  <>
+                    Your story, <span className="text-gradient">beautifully told.</span>
+                  </>
+                )}
+              </motion.h2>
+              <ul className="mt-6 space-y-3">
+                {perks.map((p, i) => (
+                  <motion.li
+                    key={p}
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35 + i * 0.1 }}
+                    className="flex items-center gap-3 text-ink-soft"
+                  >
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-violet shadow-sm">
+                      <Check size={14} strokeWidth={3} />
+                    </span>
+                    {p}
+                  </motion.li>
+                ))}
+              </ul>
             </div>
           </div>
-        </motion.section>
+        </aside>
 
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 28,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            delay: 0.08,
-            duration: 0.45,
-            ease: "easeOut",
-          }}
-          className="w-full rounded-2xl border border-white/70 bg-white/85 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur-xl sm:p-8"
-        >
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-900/20">
-              <FileText size={26} />
+        {/* Form side */}
+        <main className="flex items-center justify-center px-4 py-10 sm:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full max-w-md"
+          >
+            <div className="mb-8 flex justify-center lg:hidden">
+              <Logo />
             </div>
 
-            <h1 className="text-3xl font-black tracking-tight text-slate-950">
-              {title}
-            </h1>
-
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              {subtitle}
-            </p>
-          </div>
-
-          {children}
-        </motion.div>
+            <div className="glass-strong rounded-[2rem] p-7 sm:p-9">
+              <span className="eyebrow">
+                <Sparkles size={13} /> AI resume studio
+              </span>
+              <h1 className="mt-5 text-3xl font-extrabold text-ink sm:text-4xl">{title}</h1>
+              <p className="mt-2 text-ink-soft">{subtitle}</p>
+              <div className="mt-8">{children}</div>
+            </div>
+          </motion.div>
+        </main>
       </div>
-    </div>
+    </>
   );
 }

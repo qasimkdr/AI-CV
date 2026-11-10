@@ -1,1 +1,10 @@
-/*    /index.html   200
+# App routes (client-rendered, not indexed)
+/dashboard            /index.html   200
+/create-resume        /index.html   200
+/profile              /index.html   200
+/edit-resume/*        /index.html   200
+/resume-preview/*     /index.html   200
+
+# Public pages are pre-generated as static HTML (dist/<route>/index.html)
+# and served directly. Anything else is a real 404 that still renders the app.
+/*                    /404.html     404
