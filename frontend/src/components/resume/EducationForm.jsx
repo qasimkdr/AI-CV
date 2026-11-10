@@ -1,177 +1,39 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { AddButton, ItemCard, ItemList, SectionCard, TextField } from "../editor/FormBits";
 
-export default function EducationForm({
-  data,
-  setResumeData,
-}) {
-  const addEducation = () => {
-    setResumeData((prev) => ({
-      ...prev,
-      education: [
-        ...prev.education,
-        {
-          institute: "",
-          degree: "",
-          startYear: "",
-          endYear: "",
-        },
-      ],
-    }));
-  };
+const blank = { institute: "", degree: "", startYear: "", endYear: "" };
 
-  const removeEducation = (index) => {
-    setResumeData((prev) => ({
-      ...prev,
-      education: prev.education.filter(
-        (_, i) => i !== index
-      ),
-    }));
-  };
-
-  const handleChange = (
-    index,
-    field,
-    value
-  ) => {
-    setResumeData((prev) => {
-      const updatedEducation = [
-        ...prev.education,
-      ];
-
-      updatedEducation[index] = {
-        ...updatedEducation[index],
-        [field]: value,
-      };
-
-      return {
-        ...prev,
-        education: updatedEducation,
-      };
+export default function EducationForm({ data = [], setResumeData }) {
+  const add = () => setResumeData((p) => ({ ...p, education: [...(p.education || []), { ...blank }] }));
+  const remove = (index) =>
+    setResumeData((p) => ({ ...p, education: p.education.filter((_, i) => i !== index) }));
+  const change = (index, field, value) =>
+    setResumeData((p) => {
+      const updated = [...p.education];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...p, education: updated };
     });
-  };
 
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-200/60 backdrop-blur-xl md:p-6">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-500">
-            Academics
-          </p>
-          <h2 className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
-            Education
-          </h2>
-        </div>
-
-        <Button
-          type="button"
-          onClick={addEducation}
-          className="bg-slate-950 text-white hover:bg-slate-800"
-        >
-          Add Education
-        </Button>
-      </div>
-
-      <div className="space-y-6">
-        {data.map((edu, index) => (
-          <div
-            key={index}
-            className="rounded-2xl border border-slate-100 bg-white/75 p-4 shadow-sm"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800">
-                Education #{index + 1}
-              </h3>
-
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() =>
-                  removeEducation(index)
-                }
-                className="bg-red-50 text-red-600 hover:bg-red-100"
-              >
-                Remove
-              </Button>
+    <SectionCard
+      eyebrow="Academics"
+      title="Education"
+      description="Degrees, diplomas and bootcamps."
+      action={<AddButton onClick={add}>Add education</AddButton>}
+    >
+      <ItemList
+        items={data}
+        empty="Add your university, college or relevant course."
+        render={(edu, i) => (
+          <ItemCard title={edu.degree || edu.institute || `Education #${i + 1}`} onRemove={() => remove(i)}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField id={`ed-inst-${i}`} label="School / Institute" placeholder="Stanford University" value={edu.institute || ""} onChange={(e) => change(i, "institute", e.target.value)} />
+              <TextField id={`ed-deg-${i}`} label="Degree" placeholder="BS Computer Science" value={edu.degree || ""} onChange={(e) => change(i, "degree", e.target.value)} />
+              <TextField id={`ed-start-${i}`} label="Start year" placeholder="2019" inputMode="numeric" value={edu.startYear || ""} onChange={(e) => change(i, "startYear", e.target.value)} />
+              <TextField id={`ed-end-${i}`} label="End year" placeholder="2023" inputMode="numeric" value={edu.endYear || ""} onChange={(e) => change(i, "endYear", e.target.value)} />
             </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label className="mb-2 text-slate-700">
-                  School / College / University
-                </Label>
-
-                <Input
-                  placeholder="University of Karachi"
-                  value={edu.institute}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "institute",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 text-slate-700">
-                  Degree / Program
-                </Label>
-
-                <Input
-                  placeholder="BS Computer Science"
-                  value={edu.degree}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "degree",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 text-slate-700">Start Year</Label>
-
-                <Input
-                  placeholder="2022"
-                  value={edu.startYear}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "startYear",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 text-slate-700">End Year</Label>
-
-                <Input
-                  placeholder="2026"
-                  value={edu.endYear}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "endYear",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+          </ItemCard>
+        )}
+      />
+    </SectionCard>
   );
 }

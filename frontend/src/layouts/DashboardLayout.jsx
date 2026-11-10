@@ -1,26 +1,53 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+
 import Sidebar from "../components/dashboard/Sidebar";
+import MobileNav from "../components/dashboard/MobileNav";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
+import Seo from "../components/seo/Seo";
 
-export default function DashboardLayout({
-  children,
-}) {
+const KEY = "aicv:sidebar-collapsed";
+
+export default function DashboardLayout({ children, title, subtitle, actions, seoTitle, wide = false, focus = false }) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggle = () =>
+    setCollapsed((v) => {
+      try {
+        localStorage.setItem(KEY, v ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !v;
+    });
+
   return (
-    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#dcf7ff_0,#f8fafc_34%,#ecfdf5_100%)]">
-      <div className="pointer-events-none fixed inset-0 opacity-80">
-        <div className="absolute left-10 top-24 h-56 w-56 rounded-full bg-sky-300/30 blur-3xl" />
-        <div className="absolute bottom-16 right-12 h-72 w-72 rounded-full bg-emerald-300/25 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/60 blur-3xl" />
+    <>
+      <Seo title={seoTitle || `${title || "Dashboard"} — AI CV`} noindex />
+      <div className="aurora" aria-hidden="true" />
+      <div className="flex min-h-[100dvh]">
+        <Sidebar collapsed={collapsed} onToggle={toggle} />
+
+        <div className={`min-w-0 flex-1 px-4 sm:px-6 lg:pb-10 lg:pl-2 lg:pr-8 ${focus ? "pb-8" : "pb-28"}`}>
+          <div className={`mx-auto ${wide ? "max-w-[1400px]" : "max-w-6xl"}`}>
+            <DashboardHeader title={title} subtitle={subtitle} actions={actions} />
+            <motion.main
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {children}
+            </motion.main>
+          </div>
+        </div>
       </div>
-
-      <DashboardHeader />
-
-      <div className="relative z-10 mx-auto flex max-w-7xl gap-2 px-4 pb-8 pt-4 md:px-6 lg:px-8">
-        <Sidebar />
-
-        <main className="min-w-0 flex-1">
-          {children}
-        </main>
-      </div>
-    </div>
+      {!focus && <MobileNav />}
+    </>
   );
 }

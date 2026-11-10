@@ -1,202 +1,54 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 
-import TemplateCard from "../createResume/TemplateCard";
+import { SectionCard } from "../editor/FormBits";
+import TemplateThumb from "./TemplateThumb";
+import { TEMPLATES } from "../../lib/templates";
 
-import ModernTemplate from "./ModernTemplate";
-import ATSClassicTemplate from "./ATSClassicTemplate";
-import CreativeTemplate from "./CreativeTemplate";
-import ExecutiveTemplate from "./ExecutiveTemplate";
-import DeveloperTemplate from "./DeveloperTemplate";
-
-export default function TemplateSelector({
-  selectedTemplate,
-  setResumeData,
-}) {
-  const templates = [
-    {
-      id: "modern",
-      name: "Modern",
-      description:
-        "Professional two-column design",
-      component: ModernTemplate,
-    },
-    {
-      id: "ats",
-      name: "ATS Classic",
-      description:
-        "ATS-friendly recruiter format",
-      component: ATSClassicTemplate,
-    },
-    {
-      id: "creative",
-      name: "Creative",
-      description:
-        "Stylish layout with sidebar",
-      component: CreativeTemplate,
-    },
-    {
-      id: "executive",
-      name: "Executive",
-      description:
-        "Premium executive layout",
-      component: ExecutiveTemplate,
-    },
-    {
-      id: "developer",
-      name: "Developer",
-      description:
-        "Dark theme for developers",
-      component: DeveloperTemplate,
-    },
-  ];
-
-  const PER_PAGE = 3;
-
-  const [page, setPage] =
-    useState(0);
-
-  const totalPages =
-    Math.ceil(
-      templates.length /
-        PER_PAGE
-    );
-
-  const visibleTemplates =
-    templates.slice(
-      page * PER_PAGE,
-      page * PER_PAGE +
-        PER_PAGE
-    );
+export default function TemplateSelector({ selectedTemplate, setResumeData }) {
+  const selected = String(selectedTemplate || "modern").toLowerCase();
 
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-xl">
-
-      {/* Heading */}
-
-      <div className="mb-6 flex items-center justify-between">
-
-        <div>
-
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-500">
-            Visual Style
-          </p>
-
-          <h2 className="mt-2 text-2xl font-black text-slate-900">
-            Choose Template
-          </h2>
-
-        </div>
-
-        <div className="flex gap-2">
-
-          <button
-            type="button"
-            disabled={
-              page === 0
-            }
-            onClick={() =>
-              setPage(
-                page - 1
-              )
-            }
-            className="rounded-xl border p-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronLeft
-              size={22}
-            />
-          </button>
-
-          <button
-            type="button"
-            disabled={
-              page ===
-              totalPages - 1
-            }
-            onClick={() =>
-              setPage(
-                page + 1
-              )
-            }
-            className="rounded-xl border p-2 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronRight
-              size={22}
-            />
-          </button>
-
-        </div>
-
+    <SectionCard
+      eyebrow="Visual style"
+      title="Choose a template"
+      description="You can switch at any time — your content stays the same."
+    >
+      <div role="radiogroup" aria-label="Resume template" className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        {TEMPLATES.map((t) => {
+          const isOn = selected === t.id;
+          return (
+            <motion.button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={isOn}
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setResumeData((p) => ({ ...p, template: t.id }))}
+              className={`relative overflow-hidden rounded-3xl border bg-white/60 p-2 text-left transition ${
+                isOn ? "border-violet/60 ring-4 ring-violet/15" : "border-white hover:border-violet/25"
+              }`}
+            >
+              <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
+                <TemplateThumb template={t.component} aspect={1.2} />
+              </div>
+              <div className="px-1.5 pb-1 pt-2.5">
+                <p className="font-display text-sm font-bold text-ink">{t.name}</p>
+                <p className="line-clamp-1 text-xs text-ink-soft">{t.bestFor}</p>
+              </div>
+              {isOn && (
+                <motion.span
+                  layoutId="tpl-check"
+                  className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-brand text-white shadow-lg"
+                >
+                  <Check size={15} strokeWidth={3} />
+                </motion.span>
+              )}
+            </motion.button>
+          );
+        })}
       </div>
-
-      <AnimatePresence
-        mode="wait"
-      >
-
-        <motion.div
-          key={page}
-          initial={{
-            x: 150,
-            opacity: 0,
-          }}
-          animate={{
-            x: 0,
-            opacity: 1,
-          }}
-          exit={{
-            x: -150,
-            opacity: 0,
-          }}
-          transition={{
-            duration: 0.35,
-          }}
-          className="grid gap-6 md:grid-cols-3"
-        >
-
-          {visibleTemplates.map(
-            (
-              template
-            ) => (
-              <TemplateCard
-                key={
-                  template.id
-                }
-                template={
-                  template
-                }
-                selectedTemplate={
-                  selectedTemplate
-                }
-                setResumeData={
-                  setResumeData
-                }
-              />
-            )
-          )}
-
-        </motion.div>
-
-      </AnimatePresence>
-
-      <div className="mt-6 flex justify-center gap-2">
-
-        {Array.from({
-          length:
-            totalPages,
-        }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-2 rounded-full transition-all ${
-              page === i
-                ? "w-8 bg-sky-500"
-                : "w-2 bg-slate-300"
-            }`}
-          />
-        ))}
-
-      </div>
-
-    </div>
+    </SectionCard>
   );
 }

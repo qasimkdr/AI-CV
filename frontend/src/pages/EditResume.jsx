@@ -1,135 +1,80 @@
-import {
-  useState,
-  useEffect,
-} from "react";
-
-import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { Eye } from "lucide-react";
 
 import DashboardLayout from "../layouts/DashboardLayout";
-
-import PersonalInfoForm from "../components/resume/PersonalInfoForm";
-import EducationForm from "../components/resume/EducationForm";
-import ExperienceForm from "../components/resume/ExperienceForm";
-import SkillsForm from "../components/resume/SkillsForm";
-import ProjectsForm from "../components/resume/ProjectsForm";
-import CertificationsForm from "../components/resume/CertificationsForm";
-
-import { Button } from "@/components/ui/button";
-
-import {
-  getResume,
-  updateResume,
-} from "../services/resumeApi";
+import ResumeEditor from "../components/editor/ResumeEditor";
+import { normalizeResume } from "../lib/resumeModel";
+import { getResume, updateResume } from "../services/resumeApi";
+import { toast } from "../lib/toast";
 
 export default function EditResume() {
   const { id } = useParams();
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [resumeData, setResumeData] =
-    useState({
-      template: "Modern",
-
-      personalInfo: {},
-
-      education: [],
-
-      experience: [],
-
-      skills: [],
-
-      projects: [],
-
-      certifications: [],
-    });
+  const [resumeData, setResumeData] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    fetchResume();
+    getResume(id)
+      .then((data) => setResumeData(normalizeResume(data)))
+      .catch((error) => {
+        console.error(error);
+        toast.error("Couldn't load this resume");
+      });
+  }, [id]);
+
+  const update = useCallback((updater) => {
+    setDirty(true);
+    setResumeData(updater);
   }, []);
 
-  const fetchResume =
-    async () => {
-      try {
-        const data =
-          await getResume(id);
-
-        setResumeData(data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  const handleUpdate =
-    async () => {
-      try {
-        await updateResume(
-          id,
-          resumeData
-        );
-
-        alert(
-          "Resume Updated Successfully"
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        Loading...
-      </DashboardLayout>
-    );
-  }
+  const handleSave = useCallback(async () => {
+    if (saving || !resumeData) return;
+    setSaving(true);
+    try {
+      await updateResume(id, resumeData);
+      setDirty(false);
+      toast.success("Changes saved");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
+  }, [id, resumeData, saving]);
 
   return (
-    <DashboardLayout>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <h1 className="text-3xl font-bold">
-          Edit Resume
-        </h1>
-
-        <PersonalInfoForm
-          data={resumeData.personalInfo}
-          setResumeData={setResumeData}
+    <DashboardLayout
+      wide
+      focus
+      title="Edit resume"
+      subtitle={resumeData?.personalInfo?.fullName || "Loading…"}
+      seoTitle="Edit resume — AI CV"
+      actions={
+        <Link to={`/resume-preview/${id}`} className="btn btn-glass btn-sm hidden sm:inline-flex">
+          <Eye size={15} /> Preview
+        </Link>
+      }
+    >
+      {resumeData ? (
+        <ResumeEditor
+          data={resumeData}
+          setData={update}
+          onSave={handleSave}
+          saving={saving}
+          dirty={dirty}
+          saveLabel="Save changes"
         />
-
-        <EducationForm
-          data={resumeData.education}
-          setResumeData={setResumeData}
-        />
-
-        <ExperienceForm
-          data={resumeData.experience}
-          setResumeData={setResumeData}
-        />
-
-        <SkillsForm
-          data={resumeData.skills}
-          setResumeData={setResumeData}
-        />
-
-        <ProjectsForm
-          data={resumeData.projects}
-          setResumeData={setResumeData}
-        />
-
-        <CertificationsForm
-          data={resumeData.certifications}
-          setResumeData={setResumeData}
-        />
-
-        <Button
-          onClick={handleUpdate}
-          className="bg-indigo-600"
-        >
-          Update Resume
-        </Button>
-      </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
+          <div className="glass relative h-[520px] overflow-hidden rounded-[2rem]">
+            <div className="shimmer absolute inset-0" />
+          </div>
+          <div className="glass relative hidden h-[520px] overflow-hidden rounded-[2rem] xl:block">
+            <div className="shimmer absolute inset-0" />
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

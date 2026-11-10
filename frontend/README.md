@@ -1,16 +1,38 @@
-# React + Vite
+# AI CV — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + Tailwind CSS v4 frontend for **AI CV**, the AI resume builder.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm run dev      # local dev server
+npm run build    # production build + SEO step (per-route HTML, sitemap, robots, 404)
+npm run preview  # serve the production build
+npm run lint
+```
 
-## React Compiler
+## Design system
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Light, glassmorphic UI defined in `src/index.css`:
 
-## Expanding the ESLint configuration
+- Tokens: `ink`, `violet`, `sky`, `blush`, `peach`, `mint`, `pearl` (use as Tailwind colors, e.g. `text-ink`, `bg-violet/20`)
+- Surfaces: `.glass`, `.glass-strong`, `.glass-tint`, `.aurora` (page background)
+- Buttons: `.btn` + `.btn-primary | .btn-glass | .btn-ghost | .btn-danger`, sizes `.btn-sm | .btn-lg`
+- Inputs: `.field`
+- Fonts: Bricolage Grotesque (headings) + Geist (body), self-hosted
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Motion primitives live in `src/components/motion` (`Reveal`, `TiltCard`, `Counter`, `ScoreRing`).
+
+## 3D
+
+WebGL scenes (`src/components/three`) use three.js + React Three Fiber. `Scene3D` lazy-loads them
+after the page is idle, pauses rendering off-screen, renders a still frame for reduced-motion users
+and falls back to CSS when WebGL is unavailable — three.js never blocks first paint.
+
+## SEO
+
+- Route titles/descriptions, FAQ and JSON-LD: `src/seo/site.js`
+- `scripts/seo-build.mjs` writes static `dist/<route>/index.html` with route-specific meta,
+  JSON-LD on the home page, `sitemap.xml`, `robots.txt` and a `404.html`
+- Set `VITE_SITE_URL` to change the canonical domain (defaults to `https://aicvfrontend.netlify.app`)
+- `public/_redirects` serves app routes as SPA and returns real 404s for unknown URLs

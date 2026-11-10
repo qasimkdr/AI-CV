@@ -1,189 +1,48 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { AddButton, ItemCard, ItemList, SectionCard, TextArea, TextField } from "../editor/FormBits";
 
-export default function ExperienceForm({
-  data,
-  setResumeData,
-}) {
-  const addExperience = () => {
-    setResumeData((prev) => ({
-      ...prev,
-      experience: [
-        ...prev.experience,
-        {
-          company: "",
-          position: "",
-          startDate: "",
-          endDate: "",
-          description: "",
-        },
-      ],
-    }));
-  };
+const blank = { company: "", position: "", startDate: "", endDate: "", description: "" };
 
-  const removeExperience = (index) => {
-    setResumeData((prev) => ({
-      ...prev,
-      experience: prev.experience.filter(
-        (_, i) => i !== index
-      ),
-    }));
-  };
-
-  const handleChange = (
-    index,
-    field,
-    value
-  ) => {
-    setResumeData((prev) => {
-      const updated = [
-        ...prev.experience,
-      ];
-
-      updated[index] = {
-        ...updated[index],
-        [field]: value,
-      };
-
-      return {
-        ...prev,
-        experience: updated,
-      };
+export default function ExperienceForm({ data = [], setResumeData }) {
+  const add = () => setResumeData((p) => ({ ...p, experience: [...(p.experience || []), { ...blank }] }));
+  const remove = (index) =>
+    setResumeData((p) => ({ ...p, experience: p.experience.filter((_, i) => i !== index) }));
+  const change = (index, field, value) =>
+    setResumeData((p) => {
+      const updated = [...p.experience];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...p, experience: updated };
     });
-  };
 
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-200/60 backdrop-blur-xl md:p-6">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-500">
-            Work history
-          </p>
-          <h2 className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
-            Experience
-          </h2>
-        </div>
-
-        <Button
-          type="button"
-          onClick={addExperience}
-          className="bg-slate-950 text-white hover:bg-slate-800"
-        >
-          Add Experience
-        </Button>
-      </div>
-
-      <div className="space-y-6">
-        {data.map((exp, index) => (
-          <div
-            key={index}
-            className="rounded-2xl border border-slate-100 bg-white/75 p-4 shadow-sm"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800">
-                Experience #{index + 1}
-              </h3>
-
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() =>
-                  removeExperience(index)
-                }
-                className="bg-red-50 text-red-600 hover:bg-red-100"
-              >
-                Remove
-              </Button>
+    <SectionCard
+      eyebrow="Work history"
+      title="Experience"
+      description="Most recent first. Focus on results, not just duties."
+      action={<AddButton onClick={add}>Add experience</AddButton>}
+    >
+      <ItemList
+        items={data}
+        empty="No experience yet — add your most recent role, internship or volunteer work."
+        render={(exp, i) => (
+          <ItemCard title={exp.position || exp.company || `Experience #${i + 1}`} onRemove={() => remove(i)}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField id={`ex-pos-${i}`} label="Job title" placeholder="Frontend Developer" value={exp.position || ""} onChange={(e) => change(i, "position", e.target.value)} />
+              <TextField id={`ex-co-${i}`} label="Company" placeholder="Acme Inc." value={exp.company || ""} onChange={(e) => change(i, "company", e.target.value)} />
+              <TextField id={`ex-start-${i}`} label="Start date" placeholder="Jan 2023" value={exp.startDate || ""} onChange={(e) => change(i, "startDate", e.target.value)} />
+              <TextField id={`ex-end-${i}`} label="End date" placeholder="Present" value={exp.endDate || ""} onChange={(e) => change(i, "endDate", e.target.value)} />
+              <TextArea
+                id={`ex-desc-${i}`}
+                className="md:col-span-2"
+                label="What did you achieve?"
+                placeholder="Led the redesign of… which increased… by 30%."
+                hint="Tip: start with a verb and include a number. AI Enhance can polish this later."
+                value={exp.description || ""}
+                onChange={(e) => change(i, "description", e.target.value)}
+              />
             </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label className="mb-2 text-slate-700">Company</Label>
-
-                <Input
-                  value={exp.company}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "company",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 text-slate-700">Position</Label>
-
-                <Input
-                  value={exp.position}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "position",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 text-slate-700">Start Date</Label>
-
-                <Input
-                  value={exp.startDate}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "startDate",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 text-slate-700">End Date</Label>
-
-                <Input
-                  value={exp.endDate}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "endDate",
-                      e.target.value
-                    )
-                  }
-                  className="h-11 border-slate-200 bg-white"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <Label className="mb-2 text-slate-700">
-                  Description
-                </Label>
-
-                <textarea
-                  rows={4}
-                  value={exp.description}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      "description",
-                      e.target.value
-                    )
-                  }
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+          </ItemCard>
+        )}
+      />
+    </SectionCard>
   );
 }
