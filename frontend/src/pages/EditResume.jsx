@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Eye } from "lucide-react";
 
 import DashboardLayout from "../layouts/DashboardLayout";
 import ResumeEditor from "../components/editor/ResumeEditor";
-import { normalizeResume } from "../lib/resumeModel";
 import { getResume, updateResume } from "../services/resumeApi";
+import { normalizeResume } from "../lib/resumeModel";
 import { toast } from "../lib/toast";
 
 export default function EditResume() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [resumeData, setResumeData] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [saveState, setSaveState] = useState("saved");
+  const dirty = useRef(false);
+  const latest = useRef(null);
 
   useEffect(() => {
     getResume(id)
@@ -23,25 +26,62 @@ export default function EditResume() {
       });
   }, [id]);
 
+  useEffect(() => {
+    latest.current = resumeData;
+  }, [resumeData]);
+
+  const persist = useCallback(async () => {
+    if (!latest.current) return false;
+    dirty.current = false;
+    setSaveState("saving");
+    try {
+      await updateResume(id, latest.current);
+      setSaveState(dirty.current ? "unsaved" : "saved");
+      return true;
+    } catch (error) {
+      console.error(error);
+      dirty.current = true;
+      setSaveState("error");
+      return false;
+    }
+  }, [id]);
+
+  // Autosave 2s after the last change.
+  useEffect(() => {
+    if (!dirty.current) return;
+    const t = setTimeout(persist, 2000);
+    return () => clearTimeout(t);
+  }, [resumeData, persist]);
+
+  // Warn before closing the tab with unsaved edits.
+  useEffect(() => {
+    const onBefore = (e) => {
+      if (dirty.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBefore);
+    return () => window.removeEventListener("beforeunload", onBefore);
+  }, []);
+
   const update = useCallback((updater) => {
-    setDirty(true);
+    dirty.current = true;
+    setSaveState("unsaved");
     setResumeData(updater);
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (saving || !resumeData) return;
-    setSaving(true);
-    try {
-      await updateResume(id, resumeData);
-      setDirty(false);
-      toast.success("Changes saved");
-    } catch (error) {
-      console.error(error);
-      toast.error(error?.response?.data?.message || "Failed to save changes");
-    } finally {
+  const handleSave = useCallback(
+    async (opts = {}) => {
+      setSaving(true);
+      const ok = await persist();
       setSaving(false);
-    }
-  }, [id, resumeData, saving]);
+      if (!ok) return toast.error("Failed to save changes");
+      if (opts.finish) navigate(`/resume-preview/${id}`);
+      else toast.success("Changes saved");
+    },
+    [id, navigate, persist]
+  );
 
   return (
     <DashboardLayout
@@ -57,20 +97,13 @@ export default function EditResume() {
       }
     >
       {resumeData ? (
-        <ResumeEditor
-          data={resumeData}
-          setData={update}
-          onSave={handleSave}
-          saving={saving}
-          dirty={dirty}
-          saveLabel="Save changes"
-        />
+        <ResumeEditor data={resumeData} setData={update} onSave={handleSave} saving={saving} saveState={saveState} saveLabel="Save now" />
       ) : (
-        <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
-          <div className="glass relative h-[520px] overflow-hidden rounded-[2rem]">
+        <div className="grid gap-6 lg:grid-cols-[230px_1fr]">
+          <div className="glass relative hidden h-[520px] overflow-hidden rounded-[2rem] lg:block">
             <div className="shimmer absolute inset-0" />
           </div>
-          <div className="glass relative hidden h-[520px] overflow-hidden rounded-[2rem] xl:block">
+          <div className="glass relative h-[520px] overflow-hidden rounded-[2rem]">
             <div className="shimmer absolute inset-0" />
           </div>
         </div>

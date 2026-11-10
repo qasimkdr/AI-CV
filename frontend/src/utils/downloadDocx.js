@@ -11,7 +11,7 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 
-import { contactItems, dateRange, normalizeResume, toBullets } from "../components/templates/resumeData";
+import { SECTION_TITLES, SKILL_GROUP_LABELS, contactItems, normalizeResume, toBullets } from "../components/templates/resumeData";
 
 // ATS-friendly Word export: single column, real headings, real bullets,
 // right-aligned dates and only the sections that have content.
@@ -89,48 +89,97 @@ export const downloadDocx = async (resume) => {
     children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 120 }, children: runs }));
   }
 
-  if (r.summary) {
-    children.push(sectionHeading("Professional Summary"), ...descriptionParagraphs(r.summary));
-  }
-
-  if (r.experience.length) {
-    children.push(sectionHeading("Experience"));
-    r.experience.forEach((e) => {
-      children.push(titleLine(e.position || e.company, dateRange(e.startDate, e.endDate)));
-      if (e.position && e.company) children.push(subLine(e.company));
-      children.push(...descriptionParagraphs(e.description));
-    });
-  }
-
-  if (r.projects.length) {
-    children.push(sectionHeading("Projects"));
-    r.projects.forEach((p) => {
-      if (p.title) children.push(titleLine(p.title));
-      children.push(...descriptionParagraphs(p.description));
-    });
-  }
-
-  if (r.education.length) {
-    children.push(sectionHeading("Education"));
-    r.education.forEach((e) => {
-      children.push(titleLine(e.degree || e.institute, dateRange(e.startYear, e.endYear)));
-      if (e.degree && e.institute) children.push(subLine(e.institute));
-    });
-  }
-
-  if (r.skills.length) {
+  if (r.personal.details.length) {
     children.push(
-      sectionHeading("Skills"),
-      new Paragraph({ children: [new TextRun({ text: r.skills.join(" • "), size: 21, font: FONT })] })
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 120 },
+        children: [new TextRun({ text: r.personal.details.map((d) => `${d.label}: ${d.value}`).join("  |  "), size: 18, color: "555B70", font: FONT })],
+      })
     );
   }
 
-  if (r.certifications.length) {
-    children.push(sectionHeading("Certifications"));
-    r.certifications.forEach((c) =>
-      children.push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: [new TextRun({ text: c, size: 21, font: FONT })] }))
-    );
-  }
+  const plain = (text, opts = {}) => new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text, size: 21, font: FONT, ...opts })] });
+
+  const entries = (items, { withDesc = true } = {}) => {
+    items.forEach((e) => {
+      children.push(titleLine(e.title || e.org, e.date));
+      const sub = [e.title && e.org ? e.org : "", e.location, e.type].filter(Boolean).join(" · ");
+      if (sub) children.push(subLine(sub));
+      if (e.meta) children.push(plain(e.meta, { color: "555B70", size: 19 }));
+      if (withDesc && e.description) children.push(...descriptionParagraphs(e.description));
+    });
+  };
+
+  const TITLES = { ...SECTION_TITLES, summary: "Professional Summary" };
+
+  r.order.forEach((id) => {
+    children.push(sectionHeading(TITLES[id]));
+    switch (id) {
+      case "summary":
+        children.push(...descriptionParagraphs(r.summary));
+        break;
+      case "education":
+        r.education.forEach((e) => {
+          children.push(titleLine(e.title || e.org, e.date));
+          const sub = [e.title && e.org ? e.org : "", e.location].filter(Boolean).join(" · ");
+          if (sub) children.push(subLine(sub));
+          if (e.grade || e.honors) children.push(plain([e.grade, e.honors].filter(Boolean).join(" · ")));
+          if (e.description) children.push(plain(e.description));
+        });
+        break;
+      case "projects":
+        r.projects.forEach((p) => {
+          children.push(titleLine([p.title, p.role].filter(Boolean).join(" — ")));
+          if (p.link) children.push(plain(p.link, { color: "4B3FD9", size: 19 }));
+          children.push(...descriptionParagraphs(p.description));
+        });
+        break;
+      case "skills": {
+        const groups = r.skills.reduce((acc, s) => ((acc[s.category] ||= []).push(s), acc), {});
+        const keys = Object.keys(groups);
+        keys.forEach((k) => {
+          const text = groups[k].map((s) => (s.level ? `${s.name} (${s.level})` : s.name)).join(" • ");
+          children.push(
+            keys.length > 1
+              ? new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: `${SKILL_GROUP_LABELS[k] || k}: `, bold: true, size: 21, font: FONT }), new TextRun({ text, size: 21, font: FONT })] })
+              : plain(text)
+          );
+        });
+        break;
+      }
+      case "languages":
+        children.push(plain(r.languages.map((l) => (l.level ? `${l.name} (${l.level})` : l.name)).join(" • ")));
+        break;
+      case "interests":
+        children.push(plain(r.interests.join(" • ")));
+        break;
+      case "references":
+        if (r.references.mode === "request" || !r.references.items.length) children.push(plain("Available upon request.", { italics: true }));
+        else
+          r.references.items.forEach((x) => {
+            children.push(titleLine(x.name));
+            if (x.title) children.push(subLine(x.title));
+            if (x.contact) children.push(plain(x.contact, { size: 19 }));
+          });
+        break;
+      case "publications":
+        r.publications.forEach((p) => {
+          children.push(titleLine(p.title, p.date));
+          if (p.org) children.push(subLine(p.org));
+          if (p.link) children.push(plain(p.link, { color: "4B3FD9", size: 19 }));
+        });
+        break;
+      case "certifications":
+      case "courses":
+      case "memberships":
+        entries(r[id], { withDesc: false });
+        break;
+      default:
+        entries(r[id] || []);
+    }
+  });
+
 
   const doc = new Document({
     creator: "AI CV",

@@ -1,16 +1,21 @@
-import { contactItems, dateRange, normalizeResume } from "./resumeData";
-import { Description, Page } from "./shared";
+import { SECTION_TITLES, contactItems, normalizeResume } from "./resumeData";
+import { Page, SectionBody } from "./shared";
 
-// Deliberately plain: single column, standard headings, no icons or columns —
-// the format applicant tracking systems parse most reliably.
-function Section({ title, children }) {
-  return (
-    <section className="mt-5">
-      <h2 className="border-b border-slate-800 pb-1 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-900">{title}</h2>
-      <div className="mt-2.5">{children}</div>
-    </section>
-  );
-}
+// Deliberately plain: single column, standard headings, no icons, photo or
+// columns — the format applicant tracking systems parse most reliably.
+const theme = {
+  accent: "#1e293b",
+  inline: true,
+  titleClass: "font-bold text-slate-900",
+  smallTitleClass: "font-bold text-slate-900",
+  dateClass: "text-[12px]",
+  metaClass: "text-[12px] text-slate-600",
+  skills: "comma",
+  chipClass: "",
+  summaryClass: "",
+};
+
+const TITLES = { ...SECTION_TITLES, summary: "Professional Summary" };
 
 export default function ATSClassicTemplate({ data }) {
   const r = normalizeResume(data);
@@ -31,79 +36,19 @@ export default function ATSClassicTemplate({ data }) {
             ))}
           </p>
         )}
+        {r.personal.details.length > 0 && (
+          <p className="mt-1 text-[11.5px] text-slate-600">{r.personal.details.map((d) => `${d.label}: ${d.value}`).join("  |  ")}</p>
+        )}
       </header>
 
-      {r.summary && (
-        <Section title="Professional Summary">
-          <p>{r.summary}</p>
-        </Section>
-      )}
-
-      {r.experience.length > 0 && (
-        <Section title="Experience">
-          <div className="space-y-4">
-            {r.experience.map((e, i) => (
-              <div key={i} className="break-inside-avoid">
-                <div className="flex items-baseline justify-between gap-4">
-                  <p className="font-bold text-slate-900">
-                    {e.position}
-                    {e.position && e.company && ", "}
-                    <span className="font-normal">{e.company}</span>
-                  </p>
-                  <span className="shrink-0 text-[12px]">{dateRange(e.startDate, e.endDate)}</span>
-                </div>
-                <Description text={e.description} className="mt-1" />
-              </div>
-            ))}
+      {r.order.map((id) => (
+        <section key={id} className="mt-5">
+          <h2 className="border-b border-slate-800 pb-1 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-900">{TITLES[id]}</h2>
+          <div className="mt-2.5">
+            <SectionBody id={id} r={r} theme={theme} />
           </div>
-        </Section>
-      )}
-
-      {r.projects.length > 0 && (
-        <Section title="Projects">
-          <div className="space-y-3">
-            {r.projects.map((p, i) => (
-              <div key={i} className="break-inside-avoid">
-                <p className="font-bold text-slate-900">{p.title}</p>
-                <Description text={p.description} className="mt-0.5" />
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {r.education.length > 0 && (
-        <Section title="Education">
-          <div className="space-y-2">
-            {r.education.map((e, i) => (
-              <div key={i} className="flex items-baseline justify-between gap-4 break-inside-avoid">
-                <p>
-                  <span className="font-bold text-slate-900">{e.degree}</span>
-                  {e.degree && e.institute && ", "}
-                  {e.institute}
-                </p>
-                <span className="shrink-0 text-[12px]">{dateRange(e.startYear, e.endYear)}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {r.skills.length > 0 && (
-        <Section title="Skills">
-          <p>{r.skills.join(", ")}</p>
-        </Section>
-      )}
-
-      {r.certifications.length > 0 && (
-        <Section title="Certifications">
-          <ul className="list-disc space-y-0.5 pl-5">
-            {r.certifications.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ul>
-        </Section>
-      )}
+        </section>
+      ))}
     </Page>
   );
 }

@@ -1,9 +1,12 @@
-import { contactItems, dateRange, normalizeResume } from "./resumeData";
-import { Description, Page } from "./shared";
+import { SECTION_TITLES, contactItems, normalizeResume } from "./resumeData";
+import { Page, Photo, SectionBody } from "./shared";
 
 const SERIF = 'Georgia, "Times New Roman", serif';
 const GOLD = "#b08a3e";
 const NAVY = "#1f2a44";
+
+const TITLES = { ...SECTION_TITLES, summary: "Executive Profile", skills: "Core Competencies", experience: "Professional Experience", projects: "Key Initiatives" };
+const HALF = new Set(["education", "certifications", "languages", "courses", "memberships", "interests", "references", "awards"]);
 
 function Heading({ children }) {
   return (
@@ -14,14 +17,34 @@ function Heading({ children }) {
   );
 }
 
+const theme = {
+  accent: GOLD,
+  inline: true,
+  inlineSep: " — ",
+  inlineSepClass: "font-normal text-slate-500",
+  orgInlineClass: "font-normal italic text-slate-600",
+  titleClass: "text-[15px] font-bold",
+  smallTitleClass: "font-bold",
+  dateClass: "text-[11px] font-semibold uppercase tracking-wider text-slate-500",
+  bulletClass: "!rounded-none rotate-45",
+  skills: "grid",
+  chipClass: "rounded px-2 py-0.5 ring-1 ring-amber-200 text-[12px]",
+  summaryClass: "text-[13.5px] leading-relaxed",
+  summaryStyle: { fontFamily: SERIF },
+};
+const half = { ...theme, compact: true, inline: false, titleClass: "font-bold text-slate-900", orgClass: "text-[12.5px]", dateClass: "text-[11px] text-slate-500" };
+
 export default function ExecutiveTemplate({ data }) {
   const r = normalizeResume(data);
   const contacts = contactItems(r.personal);
-  const headline = r.personal.title || r.experience[0]?.position;
+  const headline = r.personal.title || r.experience[0]?.title;
+  const fullIds = r.order.filter((id) => !HALF.has(id));
+  const halfIds = r.order.filter((id) => HALF.has(id));
 
   return (
-    <Page className="px-14 py-12 text-slate-700">
+    <Page className="px-14 py-12 text-slate-700" style={{ "--navy": NAVY }}>
       <header className="text-center">
+        <Photo src={r.personal.photo} className="mx-auto mb-4 h-24 w-24 rounded-full" style={{ boxShadow: `0 0 0 3px #fff, 0 0 0 4px ${GOLD}` }} />
         <h1 className="text-[36px] tracking-wide" style={{ fontFamily: SERIF, color: NAVY }}>{r.personal.fullName || "Your Name"}</h1>
         {headline && <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.3em]" style={{ color: GOLD }}>{headline}</p>}
         <div className="mx-auto mt-4 flex items-center justify-center gap-3">
@@ -39,93 +62,28 @@ export default function ExecutiveTemplate({ data }) {
             ))}
           </p>
         )}
+        {r.personal.details.length > 0 && <p className="mt-1 text-[11.5px] text-slate-500">{r.personal.details.map((d) => `${d.label}: ${d.value}`).join("   •   ")}</p>}
       </header>
 
-      {r.summary && (
-        <section className="mt-8">
-          <Heading>Executive Profile</Heading>
-          <p className="text-[13.5px] leading-relaxed" style={{ fontFamily: SERIF }}>{r.summary}</p>
-        </section>
-      )}
+      <div className="[&_p.font-bold]:text-[var(--navy)] [&_p.font-bold]:[font-family:Georgia,serif]">
+        {fullIds.map((id) => (
+          <section key={id} className="mt-7">
+            <Heading>{TITLES[id]}</Heading>
+            <SectionBody id={id} r={r} theme={theme} />
+          </section>
+        ))}
 
-      {r.skills.length > 0 && (
-        <section className="mt-7">
-          <Heading>Core Competencies</Heading>
-          <ul className="grid grid-cols-3 gap-x-6 gap-y-1.5 text-[12.5px]">
-            {r.skills.map((s, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="h-1 w-1 rotate-45" style={{ background: GOLD }} />
-                {s}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {r.experience.length > 0 && (
-        <section className="mt-7">
-          <Heading>Professional Experience</Heading>
-          <div className="space-y-5">
-            {r.experience.map((e, i) => (
-              <div key={i} className="break-inside-avoid">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="text-[15px]" style={{ fontFamily: SERIF, color: NAVY }}>
-                    <span className="font-bold">{e.position}</span>
-                    {e.company && <span className="italic text-slate-600"> — {e.company}</span>}
-                  </h3>
-                  <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{dateRange(e.startDate, e.endDate)}</span>
-                </div>
-                <Description text={e.description} className="mt-1.5" bulletClass="!rounded-none rotate-45" />
-              </div>
+        {halfIds.length > 0 && (
+          <div className="mt-7 grid grid-cols-2 gap-x-10 gap-y-7">
+            {halfIds.map((id) => (
+              <section key={id}>
+                <Heading>{TITLES[id]}</Heading>
+                <SectionBody id={id} r={r} theme={half} />
+              </section>
             ))}
           </div>
-        </section>
-      )}
-
-      {r.projects.length > 0 && (
-        <section className="mt-7">
-          <Heading>Key Initiatives</Heading>
-          <div className="space-y-3.5">
-            {r.projects.map((p, i) => (
-              <div key={i} className="break-inside-avoid">
-                <h3 className="font-bold" style={{ fontFamily: SERIF, color: NAVY }}>{p.title}</h3>
-                <Description text={p.description} className="mt-0.5" />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {(r.education.length > 0 || r.certifications.length > 0) && (
-        <div className="mt-7 grid grid-cols-2 gap-10">
-          {r.education.length > 0 && (
-            <section>
-              <Heading>Education</Heading>
-              <div className="space-y-2.5">
-                {r.education.map((e, i) => (
-                  <div key={i} className="break-inside-avoid">
-                    <p className="font-bold" style={{ fontFamily: SERIF, color: NAVY }}>{e.degree}</p>
-                    <p className="text-[12.5px]">
-                      {e.institute}
-                      {(e.startYear || e.endYear) && <span className="text-slate-500"> · {dateRange(e.startYear, e.endYear)}</span>}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-          {r.certifications.length > 0 && (
-            <section>
-              <Heading>Certifications</Heading>
-              <ul className="space-y-1.5 text-[12.5px]">
-                {r.certifications.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </Page>
   );
 }

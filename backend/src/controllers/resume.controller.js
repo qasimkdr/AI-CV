@@ -2,7 +2,26 @@ import Resume from "../models/Resume.js";
 import { env } from "../config/env.js";
 
 // Only these fields can be written by clients (never userId/_id/timestamps).
-const FIELDS = ["template", "personalInfo", "summary", "education", "experience", "skills", "projects", "certifications"];
+const FIELDS = [
+  "template",
+  "field",
+  "sections",
+  "personalInfo",
+  "summary",
+  "education",
+  "experience",
+  "skills",
+  "projects",
+  "certifications",
+  "languages",
+  "volunteering",
+  "awards",
+  "courses",
+  "publications",
+  "memberships",
+  "interests",
+  "references",
+];
 
 const pick = (body = {}) =>
   Object.fromEntries(FIELDS.filter((k) => body[k] !== undefined).map((k) => [k, body[k]]));

@@ -8,9 +8,26 @@ const sampleResume = {
     email: "jordan.rivera@email.com",
     phone: "+1 (555) 123-4567",
     address: "Austin, TX",
-    linkedin: "linkedin.com/in/jordanrivera",
-    github: "github.com/jrivera",
+    links: [
+      { label: "LinkedIn", url: "linkedin.com/in/jordanrivera" },
+      { label: "Portfolio", url: "jordanrivera.dev" },
+    ],
   },
+
+  sections: [
+    { id: "summary", enabled: true },
+    { id: "experience", enabled: true },
+    { id: "projects", enabled: true },
+    { id: "education", enabled: true },
+    { id: "skills", enabled: true },
+    { id: "certifications", enabled: true },
+    { id: "languages", enabled: true },
+  ],
+
+  languages: [
+    { name: "English", level: "Native" },
+    { name: "Spanish", level: "Fluent" },
+  ],
 
   summary:
     "Full-stack engineer with 7+ years building fast, accessible web products. Led teams shipping React and Node.js platforms used by millions, with a focus on performance, clean architecture and mentoring.",

@@ -1,7 +1,8 @@
-import { contactItems, dateRange, normalizeResume } from "./resumeData";
-import { ContactIcon, Description, Page } from "./shared";
+import { SECTION_TITLES, contactItems, normalizeResume } from "./resumeData";
+import { ContactIcon, DetailsList, Page, Photo, SectionBody } from "./shared";
 
 const ACCENT = "#5b4bff";
+const SIDE = new Set(["skills", "languages", "certifications", "courses", "interests", "memberships", "references", "awards"]);
 
 function Heading({ children }) {
   return (
@@ -12,110 +13,66 @@ function Heading({ children }) {
   );
 }
 
+const main = {
+  accent: ACCENT,
+  titleClass: "text-[14px] font-bold text-slate-900",
+  smallTitleClass: "font-bold text-slate-900",
+  orgClass: "text-[12.5px] font-semibold",
+  orgStyle: { color: ACCENT },
+  dateClass: "text-[11px] font-medium text-slate-500",
+  skills: "chips",
+  chipClass: "rounded-md px-2 py-1 text-[11.5px] font-medium text-slate-700",
+  chipStyle: { background: "#f1efff" },
+};
+const side = { ...main, compact: true, titleClass: "font-bold leading-snug text-slate-900", orgClass: "text-[12.5px]", orgStyle: undefined, dateClass: "text-[11px] text-slate-500" };
+
 export default function ModernTemplate({ data }) {
   const r = normalizeResume(data);
-  const headline = r.personal.title || r.experience[0]?.position;
+  const headline = r.personal.title || r.experience[0]?.title;
+  const sideIds = r.order.filter((id) => SIDE.has(id) || id === "education");
+  const mainIds = r.order.filter((id) => !sideIds.includes(id));
 
   return (
     <Page className="text-slate-700">
-      <header className="relative overflow-hidden px-12 pb-8 pt-11" style={{ background: "linear-gradient(135deg,#f4f2ff 0%,#eef6ff 100%)" }}>
+      <header className="relative flex items-center gap-6 overflow-hidden px-12 pb-8 pt-11" style={{ background: "linear-gradient(135deg,#f4f2ff 0%,#eef6ff 100%)" }}>
         <div className="absolute inset-y-0 left-0 w-1.5" style={{ background: ACCENT }} />
-        <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-slate-900">{r.personal.fullName || "Your Name"}</h1>
-        {headline && <p className="mt-1 text-[15px] font-semibold" style={{ color: ACCENT }}>{headline}</p>}
-        <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[12px] text-slate-600">
-          {contactItems(r.personal).map((c) => (
-            <li key={c.key} className="flex items-center gap-1.5">
-              <ContactIcon type={c.key} className="text-slate-400" />
-              {c.href ? <a href={c.href} className="hover:underline">{c.label}</a> : c.label}
-            </li>
-          ))}
-        </ul>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[34px] font-extrabold leading-tight tracking-tight text-slate-900">{r.personal.fullName || "Your Name"}</h1>
+          {headline && <p className="mt-1 text-[15px] font-semibold" style={{ color: ACCENT }}>{headline}</p>}
+          <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[12px] text-slate-600">
+            {contactItems(r.personal).map((c) => (
+              <li key={c.key} className="flex items-center gap-1.5">
+                <ContactIcon type={c.icon} className="text-slate-400" />
+                {c.href ? <a href={c.href}>{c.label}</a> : c.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Photo src={r.personal.photo} className="h-28 w-28 rounded-2xl ring-4 ring-white" />
       </header>
 
       <div className="grid grid-cols-[1fr_230px] gap-10 px-12 py-9">
         <main className="space-y-7">
-          {r.summary && (
-            <section>
-              <Heading>Profile</Heading>
-              <p>{r.summary}</p>
+          {mainIds.map((id) => (
+            <section key={id}>
+              <Heading>{SECTION_TITLES[id]}</Heading>
+              <SectionBody id={id} r={r} theme={main} />
             </section>
-          )}
-
-          {r.experience.length > 0 && (
-            <section>
-              <Heading>Experience</Heading>
-              <div className="space-y-5">
-                {r.experience.map((e, i) => (
-                  <div key={i} className="break-inside-avoid">
-                    <div className="flex items-baseline justify-between gap-4">
-                      <h3 className="text-[14px] font-bold text-slate-900">{e.position}</h3>
-                      <span className="shrink-0 text-[11px] font-medium text-slate-500">{dateRange(e.startDate, e.endDate)}</span>
-                    </div>
-                    {e.company && <p className="text-[12.5px] font-semibold" style={{ color: ACCENT }}>{e.company}</p>}
-                    <Description text={e.description} className="mt-1.5" />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {r.projects.length > 0 && (
-            <section>
-              <Heading>Projects</Heading>
-              <div className="space-y-4">
-                {r.projects.map((p, i) => (
-                  <div key={i} className="break-inside-avoid">
-                    <h3 className="text-[13.5px] font-bold text-slate-900">{p.title}</h3>
-                    <Description text={p.description} className="mt-1" />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          ))}
         </main>
-
         <aside className="space-y-7">
-          {r.skills.length > 0 && (
+          {r.personal.details.length > 0 && (
             <section>
-              <Heading>Skills</Heading>
-              <div className="flex flex-wrap gap-1.5">
-                {r.skills.map((s, i) => (
-                  <span key={i} className="rounded-md px-2 py-1 text-[11.5px] font-medium text-slate-700" style={{ background: "#f1efff" }}>
-                    {s}
-                  </span>
-                ))}
-              </div>
+              <Heading>Personal details</Heading>
+              <DetailsList details={r.personal.details} />
             </section>
           )}
-
-          {r.education.length > 0 && (
-            <section>
-              <Heading>Education</Heading>
-              <div className="space-y-3.5">
-                {r.education.map((e, i) => (
-                  <div key={i} className="break-inside-avoid">
-                    <h3 className="font-bold leading-snug text-slate-900">{e.degree}</h3>
-                    {e.institute && <p className="text-[12.5px]">{e.institute}</p>}
-                    {(e.startYear || e.endYear) && <p className="text-[11px] text-slate-500">{dateRange(e.startYear, e.endYear)}</p>}
-                  </div>
-                ))}
-              </div>
+          {sideIds.map((id) => (
+            <section key={id}>
+              <Heading>{SECTION_TITLES[id]}</Heading>
+              <SectionBody id={id} r={r} theme={side} />
             </section>
-          )}
-
-          {r.certifications.length > 0 && (
-            <section>
-              <Heading>Certifications</Heading>
-              <ul className="space-y-1.5 text-[12.5px]">
-                {r.certifications.map((c, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-[0.5em] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: ACCENT }} />
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          ))}
         </aside>
       </div>
     </Page>
