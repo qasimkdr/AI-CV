@@ -1,45 +1,17 @@
 import jwt from "jsonwebtoken";
 
-export const protect = (
-  req,
-  res,
-  next
-) => {
+import { env } from "../config/env.js";
+
+export const protect = (req, res, next) => {
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
   try {
-    const authHeader =
-      req.headers.authorization;
-
-    if (
-      !authHeader ||
-      !authHeader.startsWith(
-        "Bearer "
-      )
-    ) {
-      return res.status(401).json({
-        message:
-          "Unauthorized",
-      });
-    }
-
-    const token =
-      authHeader.split(
-        " "
-      )[1];
-
-    const decoded =
-      jwt.verify(
-        token,
-        process.env.JWT_SECRET
-      );
-
-    req.user =
-      decoded;
-
+    req.user = jwt.verify(header.slice(7), env.jwtSecret);
     next();
-  } catch (error) {
-    res.status(401).json({
-      message:
-        "Invalid token",
-    });
+  } catch {
+    res.status(401).json({ message: "Invalid or expired token" });
   }
 };

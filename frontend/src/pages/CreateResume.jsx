@@ -54,7 +54,7 @@ export default function CreateResume() {
       navigate(`/resume-preview/${saved._id}`);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save resume");
+      toast.error(error?.response?.data?.message || "Failed to save resume");
     } finally {
       setSaving(false);
     }
