@@ -9,6 +9,7 @@ import { createResume, getResumes } from "../services/resumeApi";
 import { emptyResume, normalizeResume } from "../lib/resumeModel";
 import { TEMPLATES } from "../lib/templates";
 import { toast } from "../lib/toast";
+import { friendlyError } from "../lib/apiError";
 
 const DRAFT_KEY = "aicv:create-draft";
 
@@ -31,6 +32,7 @@ export default function CreateResume() {
   const [latest, setLatest] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveState, setSaveState] = useState(null);
+  const [saveError, setSaveError] = useState(null);
   const touched = useRef(false);
 
   useEffect(() => {
@@ -78,6 +80,7 @@ export default function CreateResume() {
       if (saving) return;
       setSaving(true);
       setSaveState("saving");
+      setSaveError(null);
       try {
         const saved = await createResume(resumeData);
         localStorage.removeItem(DRAFT_KEY);
@@ -85,8 +88,11 @@ export default function CreateResume() {
         navigate(opts.finish ? `/resume-preview/${saved._id}` : `/edit-resume/${saved._id}`, { replace: true });
       } catch (error) {
         console.error(error);
+        const info = friendlyError(error, "Failed to save resume");
         setSaveState("error");
-        toast.error(error?.response?.data?.message || "Failed to save resume");
+        setSaveError(info);
+        toast.error(info.fields.length ? "Couldn't save — see what needs fixing above." : info.message);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } finally {
         setSaving(false);
       }
@@ -134,7 +140,7 @@ export default function CreateResume() {
         )}
       </AnimatePresence>
 
-      <ResumeEditor data={resumeData} setData={update} onSave={handleSave} saving={saving} saveState={saveState} />
+      <ResumeEditor data={resumeData} setData={update} onSave={handleSave} saving={saving} saveState={saveState} saveError={saveError} onDismissError={() => setSaveError(null)} />
     </DashboardLayout>
   );
 }

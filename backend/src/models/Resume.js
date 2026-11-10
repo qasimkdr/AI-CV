@@ -58,7 +58,9 @@ const resumeSchema = new mongoose.Schema(
         company: String,
         position: String,
         location: String,
-        type: String,
+        // NOTE: a key literally named "type" must be wrapped, otherwise
+        // Mongoose treats the whole entry as a String.
+        type: { type: String },
         startDate: String,
         endDate: String,
         current: Boolean,
